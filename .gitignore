@@ -11,8 +11,10 @@ build
 agriflow/public/portal
 agriflow/public/customer-panel
 agriflow/public/site
+agriflow/public/webshop
 agriflow/www/portal.html
 agriflow/www/customer-portal.html
 agriflow/www/home.html
+agriflow/www/website-shop.html
 
 .vscode

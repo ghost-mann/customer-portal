@@ -23,7 +23,7 @@ const TILE_DEFS = {
     desc: 'Browse the farm catalogue, check live availability, place orders and request samples.',
     cta: 'Visit shop',
     variant: null,
-    defaultHref: '/shop',
+    defaultHref: '/website-shop',
   },
 };
 
