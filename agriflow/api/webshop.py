@@ -8,10 +8,34 @@ Auth model: identical to agriflow.api.customer — every method scopes to the
 Customer linked to the current user. Staff users may impersonate.
 """
 
+import time
+
 import frappe
 from frappe import _
 
 from agriflow.api.customer import _resolve_customer, _is_staff
+
+
+def _mutate_quotation(qname: str, mutate, max_retries: int = 5):
+	"""Load Quotation `qname`, call mutate(q), save — retrying on optimistic-lock
+	clashes (MariaDB 1020) that happen when rapid +/- clicks fire concurrent
+	saves. Each retry re-fetches a fresh copy and re-applies the mutation."""
+	delay = 0.04
+	for attempt in range(max_retries + 1):
+		try:
+			q = frappe.get_doc("Quotation", qname)
+			mutate(q)
+			q.flags.ignore_mandatory = True
+			q.save(ignore_permissions=True)
+			return q
+		except Exception as e:
+			msg = str(e).lower()
+			lock_clash = ("1020" in msg) or ("has changed since last read" in msg) or ("timestampmismatch" in msg)
+			if not lock_clash or attempt == max_retries:
+				raise
+			frappe.db.rollback()
+			time.sleep(delay)
+			delay *= 2
 
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
@@ -23,15 +47,16 @@ def _price_list(customer: str) -> str | None:
 
 
 def _rate_for(item_code: str, price_list: str | None, currency: str | None = None):
-	"""Look up Item Price for (item_code, price_list). Returns dict or None."""
+	"""Look up Item Price for (item_code, price_list). Returns dict or None.
+	Field set is the conservative one — fancier fields like min_qty are checked
+	dynamically because they may not exist on every Frappe/ERPNext install."""
 	if not price_list or not item_code:
 		return None
 	filters = {"item_code": item_code, "price_list": price_list, "selling": 1}
-	row = frappe.db.get_value(
-		"Item Price", filters,
-		["price_list_rate", "currency", "uom", "min_qty"],
-		as_dict=True,
-	)
+	fields = ["price_list_rate", "currency", "uom"]
+	if frappe.db.has_column("Item Price", "min_qty"):
+		fields.append("min_qty")
+	row = frappe.db.get_value("Item Price", filters, fields, as_dict=True)
 	return dict(row) if row else None
 
 
@@ -82,28 +107,26 @@ def _open_draft_quotation(customer: str) -> str | None:
 	return rows[0].name if rows else None
 
 
-def _create_draft_quotation(customer: str) -> str:
-	"""Open a fresh draft Quotation for this customer's cart."""
+def _new_draft_quotation(customer: str):
+	"""Build (in memory) a fresh draft Quotation for this customer's cart.
+	Does NOT insert — the caller appends at least one item first, otherwise
+	ERPNext's payment_schedule validator crashes on grand_total=None."""
 	q = frappe.new_doc("Quotation")
 	q.quotation_to = "Customer"
 	q.party_name = customer
-	# customer_name auto-populates on save
 	q.order_type = "Sales"
-	# Currency + selling price list from customer if set
 	pl = _price_list(customer)
 	if pl:
 		q.selling_price_list = pl
 		ccy = frappe.db.get_value("Price List", pl, "currency")
 		if ccy:
 			q.currency = ccy
+	# Empty payment schedule + no template: dodges accounts_controller's
+	# "grand_total * invoice_portion" path when grand_total starts at None.
+	q.payment_terms_template = None
+	q.payment_schedule = []
 	q.flags.ignore_mandatory = True
-	q.insert(ignore_permissions=True)
-	frappe.db.commit()
-	return q.name
-
-
-def _ensure_cart(customer: str) -> str:
-	return _open_draft_quotation(customer) or _create_draft_quotation(customer)
+	return q
 
 
 # ── Catalog ─────────────────────────────────────────────────────────────────
@@ -268,6 +291,28 @@ def get_cart(customer: str | None = None) -> dict:
 	return _format_cart_doc(q)
 
 
+def _row_for(item_code: str, qty: float, uom: str | None, price_list: str | None) -> dict:
+	"""Build a Quotation Item row dict from an Item + price-list lookup."""
+	meta = frappe.db.get_value(
+		"Item", item_code,
+		["item_name", "stock_uom", "description"],
+		as_dict=True,
+	) or {}
+	row = {
+		"item_code": item_code,
+		"item_name": meta.get("item_name") or item_code,
+		"description": meta.get("description") or meta.get("item_name") or item_code,
+		"qty": qty,
+		"uom": uom or meta.get("stock_uom") or "Nos",
+		"conversion_factor": 1,
+	}
+	price = _rate_for(item_code, price_list)
+	if price:
+		row["rate"] = price.get("price_list_rate") or 0
+		row["price_list_rate"] = price.get("price_list_rate") or 0
+	return row
+
+
 @frappe.whitelist()
 def add_to_cart(item_code: str, qty: float = 1, uom: str | None = None, customer: str | None = None) -> dict:
 	cust = _resolve_customer(customer)
@@ -277,41 +322,31 @@ def add_to_cart(item_code: str, qty: float = 1, uom: str | None = None, customer
 	if qty <= 0:
 		qty = 1
 
-	qname = _ensure_cart(cust)
-	q = frappe.get_doc("Quotation", qname)
+	qname = _open_draft_quotation(cust)
 
-	# Look up the Item for defaults (uom, name)
-	item_meta = frappe.db.get_value(
-		"Item", item_code,
-		["item_name", "stock_uom", "image", "description"],
-		as_dict=True,
-	) or {}
-
-	# Find existing row → increment, else append
-	existing = next((r for r in (q.items or []) if r.item_code == item_code), None)
-	if existing:
-		existing.qty = float(existing.qty or 0) + qty
-	else:
-		row = q.append("items", {
-			"item_code": item_code,
-			"item_name": item_meta.get("item_name") or item_code,
-			"description": item_meta.get("description") or item_meta.get("item_name") or item_code,
-			"qty": qty,
-			"uom": uom or item_meta.get("stock_uom") or "Nos",
-			"conversion_factor": 1,
-		})
-		# Price from price list, if set
+	if qname is None:
+		# No open cart yet — build a new Quotation with this item as the FIRST
+		# row. Avoids the empty-cart-validate crash (grand_total=None × payment
+		# schedule percentages).
+		q = _new_draft_quotation(cust)
 		pl = q.selling_price_list or _price_list(cust)
-		price = _rate_for(item_code, pl)
-		if price:
-			row.rate = price.get("price_list_rate") or 0
-			row.price_list_rate = price.get("price_list_rate") or 0
+		q.append("items", _row_for(item_code, qty, uom, pl))
+		q.flags.ignore_mandatory = True
+		q.insert(ignore_permissions=True)
+		frappe.db.commit()
+		return _format_cart_doc(q.name)
 
-	q.flags.ignore_mandatory = True
-	q.flags.ignore_validate = True
-	q.save(ignore_permissions=True)
+	def _add(q):
+		existing = next((r for r in (q.items or []) if r.item_code == item_code), None)
+		if existing:
+			existing.qty = float(existing.qty or 0) + qty
+		else:
+			pl = q.selling_price_list or _price_list(cust)
+			q.append("items", _row_for(item_code, qty, uom, pl))
+
+	_mutate_quotation(qname, _add)
 	frappe.db.commit()
-	return _format_cart_doc(q.name)
+	return _format_cart_doc(qname)
 
 
 @frappe.whitelist()
@@ -320,22 +355,22 @@ def update_qty(item_code: str, qty: float, customer: str | None = None) -> dict:
 	qname = _open_draft_quotation(cust)
 	if not qname:
 		frappe.throw(_("Cart is empty."))
-	q = frappe.get_doc("Quotation", qname)
 	qty = float(qty or 0)
-	rows_to_keep = []
-	for r in (q.items or []):
-		if r.item_code == item_code:
-			if qty > 0:
-				r.qty = qty
+
+	def _update(q):
+		rows_to_keep = []
+		for r in (q.items or []):
+			if r.item_code == item_code:
+				if qty > 0:
+					r.qty = qty
+					rows_to_keep.append(r)
+			else:
 				rows_to_keep.append(r)
-			# else: drop it
-		else:
-			rows_to_keep.append(r)
-	q.items = rows_to_keep
-	q.flags.ignore_mandatory = True
-	q.save(ignore_permissions=True)
+		q.items = rows_to_keep
+
+	_mutate_quotation(qname, _update)
 	frappe.db.commit()
-	return _format_cart_doc(q.name)
+	return _format_cart_doc(qname)
 
 
 @frappe.whitelist()
@@ -349,10 +384,11 @@ def clear_cart(customer: str | None = None) -> dict:
 	qname = _open_draft_quotation(cust)
 	if not qname:
 		return get_cart(customer)
-	q = frappe.get_doc("Quotation", qname)
-	q.items = []
-	q.flags.ignore_mandatory = True
-	q.save(ignore_permissions=True)
+
+	def _clear(q):
+		q.items = []
+
+	_mutate_quotation(qname, _clear)
 	frappe.db.commit()
 	return get_cart(customer)
 

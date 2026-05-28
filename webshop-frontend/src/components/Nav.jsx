@@ -1,6 +1,7 @@
 import { useStore } from '../store';
 import { initials, shortUser } from '../utils';
 import Icon from './Icon';
+import ImpersonatePicker from './ImpersonatePicker';
 
 export default function Nav() {
   const { ctx, filters, setFilter, cart, openCart } = useStore();
@@ -29,6 +30,7 @@ export default function Nav() {
       </div>
 
       <div className="nav-right">
+        <ImpersonatePicker />
         <a className="nav-link" href="/portal" title="Back to portal">
           <Icon name="apps" />
           <span>Portal</span>

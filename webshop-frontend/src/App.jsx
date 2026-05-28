@@ -7,6 +7,7 @@ import CartDrawer from './components/CartDrawer';
 import Catalog from './pages/Catalog';
 import Confirmation from './pages/Confirmation';
 import Icon from './components/Icon';
+import Toast from './components/Toast';
 import { fmt } from './utils';
 
 export default function App() {
@@ -65,10 +66,25 @@ export default function App() {
     );
   }
 
+  const impersonating = ctx?.is_staff && useStore.getState().impersonate;
+  const needsPick = ctx?.is_staff && !ctx.customer && !impersonating;
+
   return (
     <>
       <Nav />
-      <div className="app">
+      {impersonating && (
+        <div className="imp-banner">
+          <Icon name="visibility" />
+          Staff impersonation — shopping as <strong style={{ marginLeft: 4 }}>{ctx.customer_name || impersonating} ({impersonating})</strong>
+        </div>
+      )}
+      {needsPick && (
+        <div className="imp-banner" style={{ background: 'var(--bad-soft)', color: 'var(--bad)', borderBottomColor: '#f3c8cc' }}>
+          <Icon name="info" />
+          You're signed in as staff. Pick a customer in the top-right to add items to cart.
+        </div>
+      )}
+      <div className="app" style={{ height: impersonating || needsPick ? 'calc(100vh - 60px - 33px)' : 'calc(100vh - 60px)' }}>
         <Sidebar />
         <main className="main">
           <div className="main-hd">
@@ -96,6 +112,7 @@ export default function App() {
       </div>
       {detail && <ItemDrawer />}
       {cartOpen && <CartDrawer />}
+      <Toast />
     </>
   );
 }

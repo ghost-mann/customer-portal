@@ -1,0 +1,44 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:box_type",
+ "creation": "2026-05-29 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "box_type", "abbreviation", "description",
+  "specs_section", "stem_capacity", "stem_length_max", "dimensions", "weight_kg",
+  "flags_section", "disabled"
+ ],
+ "fields": [
+  {"fieldname": "box_type",     "fieldtype": "Data",       "label": "Box type",      "reqd": 1, "unique": 1, "in_list_view": 1, "description": "e.g. Full Box, Half Box, Quarter Box"},
+  {"fieldname": "abbreviation", "fieldtype": "Data",       "label": "Abbreviation",  "in_list_view": 1, "description": "Short code used in packing/AWB (e.g. FB, HB, QB)"},
+  {"fieldname": "description",  "fieldtype": "Small Text", "label": "Description"},
+
+  {"fieldname": "specs_section",   "fieldtype": "Section Break", "label": "Specs"},
+  {"fieldname": "stem_capacity",   "fieldtype": "Int",   "label": "Stem capacity", "in_list_view": 1, "description": "Typical stem count this box holds"},
+  {"fieldname": "stem_length_max", "fieldtype": "Int",   "label": "Max stem length (cm)"},
+  {"fieldname": "dimensions",      "fieldtype": "Data",  "label": "Dimensions (L×W×H cm)"},
+  {"fieldname": "weight_kg",       "fieldtype": "Float", "label": "Empty weight (kg)"},
+
+  {"fieldname": "flags_section", "fieldtype": "Section Break", "label": ""},
+  {"fieldname": "disabled",      "fieldtype": "Check", "label": "Disabled"}
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-29 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Agriflow",
+ "name": "Box Type",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "export": 1, "report": 1, "share": 1, "print": 1, "email": 1},
+  {"role": "Sales Manager",  "read": 1, "write": 1, "create": 1, "report": 1, "share": 1, "print": 1, "email": 1},
+  {"role": "Sales User",     "read": 1, "report": 1, "print": 1}
+ ],
+ "search_fields": "box_type,abbreviation",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "box_type"
+}
