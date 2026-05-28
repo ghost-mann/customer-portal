@@ -1,0 +1,80 @@
+{
+ "actions": [],
+ "creation": "2026-05-29 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "branding_section", "brand_name", "brand_tagline",
+  "hero_section", "hero_image", "hero_eyebrow", "hero_title", "hero_subtitle", "hero_cta_label", "hero_cta_link",
+  "value_props_section", "value_props",
+  "about_section", "about_image", "about_eyebrow", "about_title", "about_body",
+  "stats_section", "stats",
+  "varieties_section", "varieties_intro", "varieties",
+  "gallery_section", "gallery",
+  "contact_section", "contact_email", "contact_phone", "contact_address", "contact_hours",
+  "social_section", "social_linkedin", "social_instagram", "social_facebook",
+  "footer_section", "footer_text", "show_powered_by"
+ ],
+ "fields": [
+  {"fieldname": "branding_section", "fieldtype": "Section Break", "label": "Branding"},
+  {"fieldname": "brand_name",       "fieldtype": "Data",          "label": "Brand name", "default": "Agriflow"},
+  {"fieldname": "brand_tagline",    "fieldtype": "Data",          "label": "Tagline", "default": "Farm-direct, every season"},
+
+  {"fieldname": "hero_section",     "fieldtype": "Section Break", "label": "Hero"},
+  {"fieldname": "hero_image",       "fieldtype": "Attach Image",  "label": "Hero image"},
+  {"fieldname": "hero_eyebrow",     "fieldtype": "Data",          "label": "Eyebrow text", "default": "FROM OUR FARMS"},
+  {"fieldname": "hero_title",       "fieldtype": "Data",          "label": "Headline", "default": "Fresh from the field, straight to you."},
+  {"fieldname": "hero_subtitle",    "fieldtype": "Small Text",    "label": "Subtitle"},
+  {"fieldname": "hero_cta_label",   "fieldtype": "Data",          "label": "Call-to-action label", "default": "See our catalogue"},
+  {"fieldname": "hero_cta_link",    "fieldtype": "Data",          "label": "Call-to-action link", "default": "/varieties"},
+
+  {"fieldname": "value_props_section", "fieldtype": "Section Break", "label": "Value propositions"},
+  {"fieldname": "value_props",         "fieldtype": "Table",          "label": "Value props", "options": "Agriflow Value Prop"},
+
+  {"fieldname": "about_section",    "fieldtype": "Section Break", "label": "About"},
+  {"fieldname": "about_image",      "fieldtype": "Attach Image",  "label": "About image"},
+  {"fieldname": "about_eyebrow",    "fieldtype": "Data",          "label": "Eyebrow", "default": "OUR STORY"},
+  {"fieldname": "about_title",      "fieldtype": "Data",          "label": "About title", "default": "Generations of know-how."},
+  {"fieldname": "about_body",       "fieldtype": "Text Editor",   "label": "About body"},
+
+  {"fieldname": "stats_section",    "fieldtype": "Section Break", "label": "Stats (optional)"},
+  {"fieldname": "stats",            "fieldtype": "Long Text",     "label": "Stats", "description": "JSON array, e.g. [{\"label\":\"Farms\",\"value\":\"7\"},{\"label\":\"Hectares\",\"value\":\"420\"}]"},
+
+  {"fieldname": "varieties_section",   "fieldtype": "Section Break", "label": "Varieties"},
+  {"fieldname": "varieties_intro",     "fieldtype": "Small Text",    "label": "Varieties intro"},
+  {"fieldname": "varieties",           "fieldtype": "Table",          "label": "Varieties", "options": "Agriflow Variety"},
+
+  {"fieldname": "gallery_section",  "fieldtype": "Section Break", "label": "Gallery"},
+  {"fieldname": "gallery",          "fieldtype": "Table",          "label": "Gallery", "options": "Agriflow Gallery Item"},
+
+  {"fieldname": "contact_section",  "fieldtype": "Section Break", "label": "Contact"},
+  {"fieldname": "contact_email",    "fieldtype": "Data",          "label": "Contact email", "default": "hello@upande.com"},
+  {"fieldname": "contact_phone",    "fieldtype": "Data",          "label": "Contact phone"},
+  {"fieldname": "contact_address",  "fieldtype": "Small Text",    "label": "Address"},
+  {"fieldname": "contact_hours",    "fieldtype": "Data",          "label": "Hours"},
+
+  {"fieldname": "social_section",   "fieldtype": "Section Break", "label": "Social"},
+  {"fieldname": "social_linkedin",  "fieldtype": "Data",          "label": "LinkedIn URL"},
+  {"fieldname": "social_instagram", "fieldtype": "Data",          "label": "Instagram URL"},
+  {"fieldname": "social_facebook",  "fieldtype": "Data",          "label": "Facebook URL"},
+
+  {"fieldname": "footer_section",   "fieldtype": "Section Break", "label": "Footer"},
+  {"fieldname": "footer_text",      "fieldtype": "Small Text",    "label": "Footer text", "default": "Agriflow · Upande Ltd"},
+  {"fieldname": "show_powered_by",  "fieldtype": "Check",         "label": "Show \"Powered by Agriflow\"", "default": 1}
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-05-29 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Agriflow",
+ "name": "Agriflow Site Settings",
+ "naming_rule": "Set by user",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager",   "read": 1, "write": 1, "create": 1, "submit": 0, "cancel": 0, "delete": 0},
+  {"role": "Website Manager",  "read": 1, "write": 1, "create": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

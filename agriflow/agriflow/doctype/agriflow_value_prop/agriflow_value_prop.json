@@ -1,0 +1,24 @@
+{
+ "actions": [],
+ "creation": "2026-05-29 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": ["icon", "title", "body"],
+ "fields": [
+  {"fieldname": "icon", "fieldtype": "Data", "label": "Icon (Material Symbol name)", "default": "spa", "in_list_view": 1},
+  {"fieldname": "title", "fieldtype": "Data", "label": "Title", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "body", "fieldtype": "Small Text", "label": "Body"}
+ ],
+ "is_child_table": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-29 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Agriflow",
+ "name": "Agriflow Value Prop",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}
