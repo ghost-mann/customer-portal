@@ -2,9 +2,28 @@ import { useState } from 'react';
 import { NAV } from '../nav';
 import Icon from './Icon';
 import { useStore } from '../store';
+import { fmt } from '@shared/utils';
 import { cn } from '@/lib/utils';
 
-export default function Sidebar() {
+function groupCount(section, data, mailCounts) {
+  switch (section) {
+    case 'leads': return data.leads?.kpis?.total;
+    case 'opps': return data.opps?.kpis?.total;
+    case 'prosp': return data.prosp?.kpis?.total;
+    case 'cust': return data.cust?.kpis?.active;
+    case 'evt': return (data.evt?.kpis?.events_open || 0) + (data.evt?.kpis?.tasks_open || 0);
+    case 'act': return data.act?.kpis?.total;
+    case 'mail': return mailCounts?.inbox_unread;
+    default: return undefined;
+  }
+}
+
+const MAIL_SUB_COUNT = {
+  unread: 'inbox_unread', inbox: 'inbox', sent: 'sent_ok',
+  crm_leads: 'crm_leads', crm_opps: 'crm_opps', crm_customers: 'crm_customers', crm_quotations: 'crm_quotations',
+};
+
+export default function Sidebar({ onCompose }) {
   const section = useStore((s) => s.section);
   const table = useStore((s) => s.table);
   const select = useStore((s) => s.select);
@@ -19,7 +38,7 @@ export default function Sidebar() {
   return (
     <aside className="bg-surface-2 border-r border-line overflow-y-auto flex flex-col pt-2.5 pb-4">
       <div className="px-2.5 pb-2">
-        <button className="w-full h-9 bg-maroon text-white rounded-[5px] text-[13px] font-semibold flex items-center justify-center gap-2">
+        <button onClick={onCompose} className="w-full h-9 bg-maroon text-white rounded-[5px] text-[13px] font-semibold flex items-center justify-center gap-2 hover:bg-maroon-2 transition-colors">
           <Icon name="edit_square" className="text-[18px]" />Compose
         </button>
       </div>
@@ -55,7 +74,11 @@ function NavItem({ it, active, onClick }) {
 }
 
 function NavGroup({ it, section, table, open, onToggle, onSelect }) {
+  const data = useStore((s) => s.data);
+  const mailCounts = useStore((s) => s.mailFolder?.counts);
   const headActive = section === it.section && !table;
+  const cnt = groupCount(it.section, data, mailCounts);
+
   return (
     <div className="mx-1.5">
       <div
@@ -67,27 +90,34 @@ function NavGroup({ it, section, table, open, onToggle, onSelect }) {
       >
         <Icon name={it.icon} className="text-[17px] shrink-0" />
         <span>{it.label}</span>
-        {it.countKey && <span className="ml-auto font-mono text-[10px] text-ink-3 font-medium">—</span>}
+        <span className={cn('ml-auto font-mono text-[10px] font-medium', headActive ? 'text-white/80' : 'text-ink-3')}>
+          {cnt != null ? fmt(cnt) : ''}
+        </span>
         <Icon
           name="chevron_right"
-          className={cn('text-[15px] text-ink-3 transition-transform', open && 'rotate-90', !it.countKey && 'ml-auto')}
+          className={cn('text-[15px] transition-transform', headActive ? 'text-white/80' : 'text-ink-3', open && 'rotate-90')}
           onClick={(e) => { e.stopPropagation(); onToggle(); }}
         />
       </div>
       {open && (
         <div className="pt-0.5 pb-1">
-          {it.subs.map((sub) => (
-            <div
-              key={sub.table || 'dash'}
-              onClick={() => onSelect(it.section, sub.table)}
-              className={cn(
-                'flex items-center gap-2 h-[26px] px-3 pl-8 mx-1 rounded text-xs cursor-pointer',
-                section === it.section && table === sub.table ? 'bg-maroon-soft text-maroon-text font-medium' : 'text-ink-2 hover:bg-hover hover:text-ink',
-              )}
-            >
-              <span>{sub.label}</span>
-            </div>
-          ))}
+          {it.subs.map((sub) => {
+            const subCnt = it.section === 'mail' ? mailCounts?.[MAIL_SUB_COUNT[sub.table]] : undefined;
+            const active = section === it.section && table === sub.table;
+            return (
+              <div
+                key={sub.table || 'dash'}
+                onClick={() => onSelect(it.section, sub.table)}
+                className={cn(
+                  'flex items-center gap-2 h-[26px] px-3 pl-8 mx-1 rounded text-xs cursor-pointer',
+                  active ? 'bg-maroon-soft text-maroon-text font-medium' : 'text-ink-2 hover:bg-hover hover:text-ink',
+                )}
+              >
+                <span>{sub.label}</span>
+                {subCnt != null && <span className="ml-auto font-mono text-[10px] text-ink-3">{fmt(subCnt)}</span>}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
