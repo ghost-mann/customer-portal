@@ -1,0 +1,26 @@
+/* Shared primitives that were byte-identical across the apps that use them.
+ *
+ * Deliberately small: buttons (.btn*) and the nav shell (.nav) are intentionally
+ * sized differently per area (marketing site vs. dense app UIs) and stay in each
+ * area's styles.css. Only genuinely-identical rules live here. An area can still
+ * override any of these by redefining the rule in its own styles.css. */
+
+/* User chip — identical in portal, webshop, customer-panel.
+ * (The .av avatar inside differs by area, so it stays local.) */
+.user-chip{
+  display:flex;align-items:center;gap:8px;
+  padding:5px 10px 5px 5px;
+  background:var(--surface-2);border-radius:999px;
+  font-family:var(--mono);font-size:11px;
+}
+
+/* Loading state — canonical app version (site uses a larger padding override). */
+.loading{
+  padding:36px;text-align:center;color:var(--text-3);
+  font-family:var(--mono);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;
+}
+
+/* Scrollbars — canonical app version (site uses a wider override). */
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:var(--text-3);}

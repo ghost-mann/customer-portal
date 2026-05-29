@@ -1,0 +1,55 @@
+/* Styles for the shared ImpersonatePicker component. Co-located with the
+ * component (imported by ImpersonatePicker.jsx) so the two never drift — these
+ * rules used to be copy-pasted into both webshop and customer-panel styles.css.
+ *
+ * Note: the impersonation *banner* (.imp-banner) shown under the nav is a
+ * per-app concern and stays in that app's stylesheet. */
+.imp-wrap{position:relative;}
+.imp-btn{
+  display:inline-flex;align-items:center;gap:7px;
+  height:30px;padding:0 11px;border-radius:999px;
+  background:var(--accent-soft);color:var(--accent-2);
+  border:1px solid #cfdbd1;font-family:var(--f);font-size:11.5px;font-weight:500;
+  cursor:pointer;transition:background 0.12s, border-color 0.12s;
+}
+.imp-btn:hover{background:#d6e2d8;border-color:var(--accent);}
+.imp-btn .material-symbols-outlined{color:var(--accent);}
+.imp-drop{
+  position:absolute;top:calc(100% + 6px);right:0;
+  width:340px;max-height:440px;background:var(--surface);
+  border:1px solid var(--border);border-radius:10px;
+  box-shadow:var(--shadow-lg);z-index:120;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.imp-search{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 12px;border-bottom:1px solid var(--border);
+  background:var(--surface-2);
+}
+.imp-search .material-symbols-outlined{font-size:16px;color:var(--text-3);}
+.imp-search input{
+  flex:1;border:none;outline:none;background:transparent;
+  font-family:var(--f);font-size:13px;color:var(--text);
+}
+.imp-list{flex:1;overflow-y:auto;}
+.imp-item{
+  padding:9px 12px;cursor:pointer;
+  transition:background 0.1s;border-bottom:1px solid var(--surface-2);
+}
+.imp-item:hover{background:var(--accent-soft);}
+.imp-item.active{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent);}
+.imp-item-name{font-size:13px;font-weight:500;color:var(--text);}
+.imp-item-meta{
+  display:flex;gap:10px;flex-wrap:wrap;
+  margin-top:3px;font-family:var(--mono);font-size:10px;color:var(--text-3);
+}
+.imp-id{color:var(--accent);}
+.imp-item.imp-clear{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 12px;color:var(--bad);
+  border-bottom:1px solid var(--border);background:var(--bad-soft);
+  font-size:12px;
+}
+.imp-item.imp-clear:hover{background:#f7d6da;}
+.imp-item.imp-clear .material-symbols-outlined{font-size:14px;}
+.imp-empty{padding:18px;text-align:center;color:var(--text-3);font-family:var(--mono);font-size:11px;}
