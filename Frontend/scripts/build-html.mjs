@@ -21,6 +21,7 @@ const ROUTES = {
   site:             'home.html',
   webshop:          'website-shop.html',
   'customer-panel': 'customer-portal.html',
+  crm:              'crm.html',
 };
 
 const JINJA_BOOT = `

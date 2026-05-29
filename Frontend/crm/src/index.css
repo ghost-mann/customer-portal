@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CRM design tokens.
+ *  - shadcn semantic vars (HSL channels) drive the shadcn/ui primitives.
+ *  - the raw CRM vars (--maroon, --surface-2, --text-2, --line, …) are the exact
+ *    hex values from the source page, exposed to Tailwind as bg-maroon,
+ *    text-ink-2, border-line, etc. for a faithful replica. */
+@layer base {
+  :root {
+    /* shadcn semantic (maroon brand) — HSL channels */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 352 60% 30%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 40 11% 97%;
+    --secondary-foreground: 45 5% 34%;
+    --muted: 40 11% 97%;
+    --muted-foreground: 47 6% 53%;
+    --accent: 40 16% 94%;
+    --accent-foreground: 0 0% 10%;
+    --destructive: 4 77% 40%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 42 19% 88%;
+    --input: 42 19% 88%;
+    --ring: 352 60% 30%;
+    --radius: 6px;
+
+    /* CRM raw palette — exact hex from source */
+    --maroon: #7a1f2b;
+    --maroon-2: #5a141f;
+    --maroon-soft: #fbeef0;
+    --maroon-text: #5a141f;
+    --surface: #ffffff;
+    --surface-2: #f8f7f5;
+    --surface-3: #efede9;
+    --hover: #f2f0ec;
+    --selected: #fbeef0;
+    --line: #e6e3dc;
+    --line-2: #cdc9bf;
+    --text: #1a1a1a;
+    --text-2: #5a5852;
+    --text-3: #8e8b80;
+    --good: #2d6a4f;
+    --good-soft: #e6f0ea;
+    --warn: #9a6700;
+    --warn-soft: #faf0d0;
+    --bad: #b42318;
+    --bad-soft: #fbe5e7;
+    --info: #175cd3;
+    --info-soft: #e0eaff;
+    --f: 'Poppins', system-ui, sans-serif;
+    --mono: 'Poppins', system-ui, sans-serif;
+  }
+
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-size: 13px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+    font-size: 18px;
+    line-height: 1;
+    vertical-align: middle;
+  }
+}
