@@ -25,9 +25,9 @@ export default function Footer({ content, navigate }) {
         <div className="foot-col">
           <h4>Members</h4>
           <ul>
-            <li><a href="/login?redirect-to=/portal">Sign in</a></li>
-            <li><a href="/portal">Member portal</a></li>
-            <li><a href="/shop">Webshop</a></li>
+            <li><a href="/login?redirect-to=/customer-portal">Sign in</a></li>
+            <li><a href="/customer-portal">Member portal</a></li>
+            <li><a href="/website-shop">Webshop</a></li>
           </ul>
         </div>
         <div className="foot-col">

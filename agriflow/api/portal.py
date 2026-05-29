@@ -95,3 +95,10 @@ def get_user_context() -> dict:
 			),
 		},
 	}
+
+
+def get_user_home_page(user):
+	"""Login landing page for website users — straight to the customer portal
+	(the /portal launcher is retired). Wired via the get_website_user_home_page
+	hook in hooks.py."""
+	return "/customer-portal"

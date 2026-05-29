@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Icon from '@shared/Icon';
+import Logo from '@shared/Logo';
 
 const LINKS = [
   { key: 'home',      label: 'Home',      path: '/' },
@@ -25,8 +26,8 @@ export default function Nav({ page, navigate, brand, isLoggedIn }) {
     <nav className={`nav${scrolled ? ' scrolled' : ''}`}>
       <div className="nav-row">
         <a className="brand" href="/" onClick={(e) => { e.preventDefault(); go('/'); }}>
-          <div className="brand-mark">AF</div>
-          <span className="brand-text">{brand?.name || 'agriflow'}</span>
+          <div className="brand-mark"><Logo /></div>
+          <span className="brand-text">{brand?.name || 'Karen Roses'}</span>
         </a>
         <div className={`nav-links${open ? ' open' : ''}`}>
           {LINKS.map((l) => (
@@ -36,8 +37,8 @@ export default function Nav({ page, navigate, brand, isLoggedIn }) {
               {l.label}
             </a>
           ))}
-          <a className="nav-cta" href={isLoggedIn ? '/portal' : '/login?redirect-to=/portal'}>
-            <Icon name={isLoggedIn ? 'apps' : 'login'} />
+          <a className="nav-cta" href={isLoggedIn ? '/customer-portal' : '/login?redirect-to=/customer-portal'}>
+            <Icon name={isLoggedIn ? 'person' : 'login'} />
             {isLoggedIn ? 'My portal' : 'Member login'}
           </a>
         </div>

@@ -4,7 +4,7 @@ import { useStore } from '../store';
 import { cn } from '@/lib/utils';
 import { api } from '@shared/api';
 import { openFrappe } from '@/lib/crm';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
+import FilterPopover from './FilterPopover';
 import { Input } from '@/components/ui/input';
 
 const PRESETS = [['7d', 'Last 7 days'], ['30d', 'Last 30 days'], ['90d', 'Last 90 days'], ['ytd', 'Year to date']];
@@ -80,61 +80,69 @@ export default function TopBar({ onSettings }) {
 
       <div className="flex items-center gap-2">
         {/* Customer filter */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <FilterPopover
+          width={280}
+          trigger={
             <button className={cn('flex items-center gap-1.5 h-[30px] px-2.5 rounded-[5px] text-[11.5px] max-w-[180px]', customerFilter ? 'bg-white text-maroon font-medium' : 'bg-white/[0.12]')}>
               <Icon name="storefront" className="text-[15px]" />
               <span className="truncate">{customerFilter || 'All customers'}</span>
               <Icon name="expand_more" className="text-[14px]" />
             </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[280px] p-2">
-            <div className="flex items-center gap-2 border border-line rounded px-2 mb-1.5">
-              <Icon name="search" className="text-[15px] text-ink-3" />
-              <input autoFocus placeholder="Filter by customer…" onChange={(e) => custSearch(e.target.value)}
-                className="flex-1 h-8 bg-transparent outline-none text-xs" />
-            </div>
-            {customerFilter && (
-              <div onClick={() => setCustomerFilter(null)} className="flex items-center gap-2 px-2 py-1.5 text-xs text-bad cursor-pointer hover:bg-hover rounded">
-                <Icon name="close" className="text-[15px]" />Clear filter
+          }
+        >
+          {({ close }) => (
+            <>
+              <div className="flex items-center gap-2 border border-line rounded px-2 mb-1.5">
+                <Icon name="search" className="text-[15px] text-ink-3" />
+                <input autoFocus placeholder="Filter by customer…" onChange={(e) => custSearch(e.target.value)}
+                  className="flex-1 h-8 bg-transparent outline-none text-xs" />
               </div>
-            )}
-            <div className="max-h-[260px] overflow-y-auto">
-              {custRows == null ? <div className="crm-empty py-3">Type to search</div>
-                : custRows.length ? custRows.map((r) => (
-                  <div key={r.name} onClick={() => setCustomerFilter(r.name)} className="px-2 py-1.5 text-xs cursor-pointer hover:bg-hover rounded">
-                    <div className="truncate">{r.label}</div>
-                    <div className="font-mono text-[9px] text-ink-3">{r.name}</div>
-                  </div>
-                )) : <div className="crm-empty py-3">No customers</div>}
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              {customerFilter && (
+                <div onClick={() => { setCustomerFilter(null); close(); }} className="flex items-center gap-2 px-2 py-1.5 text-xs text-bad cursor-pointer hover:bg-hover rounded">
+                  <Icon name="close" className="text-[15px]" />Clear filter
+                </div>
+              )}
+              <div className="max-h-[260px] overflow-y-auto">
+                {custRows == null ? <div className="crm-empty py-3">Type to search</div>
+                  : custRows.length ? custRows.map((r) => (
+                    <div key={r.name} onClick={() => { setCustomerFilter(r.name); close(); }} className="px-2 py-1.5 text-xs cursor-pointer hover:bg-hover rounded">
+                      <div className="truncate">{r.label}</div>
+                      <div className="font-mono text-[9px] text-ink-3">{r.name}</div>
+                    </div>
+                  )) : <div className="crm-empty py-3">No customers</div>}
+              </div>
+            </>
+          )}
+        </FilterPopover>
 
         {/* Date range */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <FilterPopover
+          width={260}
+          trigger={
             <button className="flex items-center gap-1.5 h-[30px] px-2.5 bg-white/[0.12] rounded-[5px] text-[11.5px]">
               <Icon name="date_range" className="text-[16px]" />
               <span>{label}</span>
               <Icon name="expand_more" className="text-[14px]" />
             </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[260px] p-2.5">
-            <div className="grid gap-1">
-              {PRESETS.map(([k, lbl]) => (
-                <button key={k} onClick={() => setDateRange(k)}
-                  className={cn('text-left text-xs px-2 py-1.5 rounded hover:bg-accent', datePreset === k && 'bg-maroon-soft text-maroon-text font-medium')}>{lbl}</button>
-              ))}
-            </div>
-            <div className="border-t border-line mt-2 pt-2 grid gap-1.5">
-              <label className="text-[10px] font-mono uppercase text-ink-3">Custom range</label>
-              <div className="flex items-center gap-2 text-xs"><span className="w-9 text-ink-3">From</span><Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-7 text-xs" /></div>
-              <div className="flex items-center gap-2 text-xs"><span className="w-9 text-ink-3">To</span><Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-7 text-xs" /></div>
-              <button onClick={() => setDateRange('custom', { from, to })} className="mt-1 h-7 rounded bg-maroon text-white text-xs font-medium">Apply custom range</button>
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          }
+        >
+          {({ close }) => (
+            <>
+              <div className="grid gap-1">
+                {PRESETS.map(([k, lbl]) => (
+                  <button key={k} onClick={() => { setDateRange(k); close(); }}
+                    className={cn('text-left text-xs px-2 py-1.5 rounded hover:bg-accent', datePreset === k && 'bg-maroon-soft text-maroon-text font-medium')}>{lbl}</button>
+                ))}
+              </div>
+              <div className="border-t border-line mt-2 pt-2 grid gap-1.5">
+                <label className="text-[10px] font-mono uppercase text-ink-3">Custom range</label>
+                <div className="flex items-center gap-2 text-xs"><span className="w-9 text-ink-3">From</span><Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-7 text-xs" /></div>
+                <div className="flex items-center gap-2 text-xs"><span className="w-9 text-ink-3">To</span><Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-7 text-xs" /></div>
+                <button onClick={() => { setDateRange('custom', { from, to }); close(); }} className="mt-1 h-7 rounded bg-maroon text-white text-xs font-medium">Apply custom range</button>
+              </div>
+            </>
+          )}
+        </FilterPopover>
 
         <div className={cn('flex items-center gap-1.5 px-2 py-1 rounded-[3px] font-mono text-[9.5px] font-medium tracking-[0.08em] uppercase', status === 'offline' ? 'bg-bad/80' : 'bg-white/[0.12]')}>
           <span className={cn('w-1.5 h-1.5 rounded-full', status === 'live' ? 'bg-emerald-300' : status === 'offline' ? 'bg-red-300' : 'bg-amber-300')} />
@@ -142,9 +150,6 @@ export default function TopBar({ onSettings }) {
         </div>
         <button onClick={() => loadAll()} className="w-[30px] h-[30px] rounded-[5px] text-white/85 hover:bg-white/10 flex items-center justify-center" title="Refresh now">
           <Icon name="refresh" className="text-[18px]" />
-        </button>
-        <button onClick={onSettings} className="w-[30px] h-[30px] rounded-[5px] text-white/85 hover:bg-white/10 flex items-center justify-center" title="Settings">
-          <Icon name="settings" className="text-[18px]" />
         </button>
       </div>
     </header>

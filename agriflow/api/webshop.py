@@ -16,6 +16,18 @@ from frappe import _
 from agriflow.api.customer import _resolve_customer, _is_staff
 
 
+# Karen Roses is a flower farm — the shop only lists floral item groups (rose
+# grades + variety/filler/foliage), filtering out operational groups like
+# hardware, dairy, motor parts, chemicals, etc. Curated from the live Item Group
+# list. Groups with no sellable items simply won't appear as categories.
+FLOWER_ITEM_GROUPS = (
+	"Roses", "Spray Roses", "Standard Roses", "Spray", "Intermediate", "Premium", "Regular",
+	"Chrysanthemums", "Summer Flowers", "Flowers Purchased (Sprays & Carnations)",
+	"Gypsophilla", "Limonium", "Lepidium", "Solidago", "Eryngium", "Caryopteris",
+	"Papyrus", "Photinia", "Hard Ruscus", "Agapanthus",
+)
+
+
 def _mutate_quotation(qname: str, mutate, max_retries: int = 5):
 	"""Load Quotation `qname`, call mutate(q), save — retrying on optimistic-lock
 	clashes (MariaDB 1020) that happen when rapid +/- clicks fire concurrent
@@ -58,6 +70,22 @@ def _rate_for(item_code: str, price_list: str | None, currency: str | None = Non
 		fields.append("min_qty")
 	row = frappe.db.get_value("Item Price", filters, fields, as_dict=True)
 	return dict(row) if row else None
+
+
+def _rates_for(item_codes: list, price_list: str | None) -> dict:
+	"""Batch Item Price lookup for many item codes (one query). Returns
+	{item_code: {price_list_rate, currency, uom}}."""
+	if not price_list or not item_codes:
+		return {}
+	rows = frappe.get_all(
+		"Item Price",
+		filters={"item_code": ["in", list(set(item_codes))], "price_list": price_list, "selling": 1},
+		fields=["item_code", "price_list_rate", "currency", "uom"],
+	) or []
+	out = {}
+	for r in rows:
+		out.setdefault(r["item_code"], r)
+	return out
 
 
 def _farms_for_item(name: str) -> list[str]:
@@ -133,16 +161,17 @@ def _new_draft_quotation(customer: str):
 
 @frappe.whitelist()
 def list_categories(customer: str | None = None) -> list:
-	"""Return Item Groups that have published Website Items, with counts."""
+	"""Return Item Groups that have sellable items, with counts."""
 	_resolve_customer(customer, allow_staff_unset=True)
 
 	rows = frappe.db.sql("""
 		SELECT item_group, COUNT(*) AS cnt
-		FROM `tabWebsite Item`
-		WHERE published = 1 AND IFNULL(item_group, '') != ''
+		FROM `tabItem`
+		WHERE disabled = 0 AND is_sales_item = 1
+		  AND has_variants = 0 AND item_group IN %(groups)s
 		GROUP BY item_group
 		ORDER BY cnt DESC, item_group ASC
-	""", as_dict=True)
+	""", values={"groups": FLOWER_ITEM_GROUPS}, as_dict=True)
 	return rows
 
 
@@ -172,78 +201,109 @@ def list_items(
 	in_season: int | str | None = None,
 	limit: int = 60,
 ) -> list:
-	"""Filtered list of published Website Items with prices + tags."""
+	"""Filtered list of sellable Items with prices. Sourced from the Item master
+	(templates + standalone; variant children are folded under their template),
+	so the shop reflects the whole catalogue, not just curated Website Items."""
 	cust = _resolve_customer(customer, allow_staff_unset=True)
 	pl = _price_list(cust) if cust else None
 
-	conditions = ["w.published = 1"]
-	values = {}
+	conditions = [
+		"i.disabled = 0",
+		"i.is_sales_item = 1",
+		"i.has_variants = 0",
+		"i.item_group IN %(groups)s",
+	]
+	values = {"groups": FLOWER_ITEM_GROUPS}
 	if category:
-		conditions.append("w.item_group = %(category)s")
+		conditions.append("i.item_group = %(category)s")
 		values["category"] = category
 	if search:
-		conditions.append("(w.web_item_name LIKE %(q)s OR w.item_code LIKE %(q)s OR w.item_name LIKE %(q)s)")
+		conditions.append("(i.item_name LIKE %(q)s OR i.item_code LIKE %(q)s)")
 		values["q"] = f"%{search}%"
 	if farm:
 		conditions.append("""EXISTS (
 			SELECT 1 FROM `tabTag Link` tl
-			WHERE tl.document_type = 'Website Item' AND tl.document_name = w.name
-			  AND tl.tag = %(farm_tag)s
+			WHERE tl.document_name = i.name AND tl.tag = %(farm_tag)s
 		)""")
 		values["farm_tag"] = f"farm:{farm}"
 	if in_season and str(in_season) not in ("0", "false", "False"):
 		conditions.append("""EXISTS (
 			SELECT 1 FROM `tabTag Link` tl
-			WHERE tl.document_type = 'Website Item' AND tl.document_name = w.name
-			  AND tl.tag = 'in-season'
+			WHERE tl.document_name = i.name AND tl.tag = 'in-season'
 		)""")
 	values["limit"] = int(limit)
 
 	rows = frappe.db.sql(f"""
-		SELECT w.name, w.item_code, w.web_item_name, w.item_name,
-		       w.item_group, w.stock_uom, w.description, w.brand,
-		       w.website_image, w.thumbnail, w.route, w.ranking, w.has_variants
-		FROM `tabWebsite Item` w
+		SELECT i.name, i.item_code,
+		       i.item_name AS web_item_name, i.item_name,
+		       i.item_group, i.stock_uom, i.description, i.brand,
+		       i.image AS website_image, i.image AS thumbnail,
+		       NULL AS route, 0 AS ranking, i.has_variants
+		FROM `tabItem` i
 		WHERE {' AND '.join(conditions)}
-		ORDER BY w.ranking DESC, w.modified DESC
+		ORDER BY i.item_name ASC
 		LIMIT %(limit)s
 	""", values=values, as_dict=True)
 
-	# Enrich each with price + tags
-	ccy = None
+	# Batch price + tag lookups (one query each) instead of per-row.
+	rates = _rates_for([r["item_code"] for r in rows], pl)
+	names = [r["name"] for r in rows]
+	tags_by = {}
+	if names:
+		for t in frappe.get_all("Tag Link", filters={"document_name": ["in", names]},
+		                        fields=["document_name", "tag"]) or []:
+			tags_by.setdefault(t["document_name"], []).append(t["tag"])
 	for r in rows:
-		_enrich(r, pl, ccy)
+		pr = rates.get(r["item_code"])
+		r["price_list_rate"] = pr.get("price_list_rate") if pr else None
+		r["price_currency"]  = pr.get("currency") if pr else None
+		r["price_uom"]       = pr.get("uom") if pr else None
+		r["min_qty"]         = None
+		tgs = tags_by.get(r["name"], [])
+		r["farms"]     = [t[5:] for t in tgs if t.startswith("farm:")]
+		r["in_season"] = "in-season" in tgs
 	return rows
 
 
 @frappe.whitelist()
 def get_item(name: str, customer: str | None = None) -> dict:
-	"""Full Website Item detail + customer-specific price."""
+	"""Full Item detail + customer-specific price."""
 	cust = _resolve_customer(customer, allow_staff_unset=True)
 	pl = _price_list(cust) if cust else None
 
-	doc = frappe.get_doc("Website Item", name)
-	if not doc.published:
+	it = frappe.db.get_value(
+		"Item", name,
+		["name", "item_code", "item_name", "item_group", "stock_uom",
+		 "description", "image", "brand", "has_variants"],
+		as_dict=True,
+	)
+	if not it:
 		frappe.throw(_("This item is not available."), frappe.PermissionError)
-	d = doc.as_dict()
-	# Trim heavy fields and add enrichment
+
 	out = {
-		"name": d.get("name"),
-		"item_code": d.get("item_code"),
-		"web_item_name": d.get("web_item_name") or d.get("item_name"),
-		"item_name": d.get("item_name"),
-		"item_group": d.get("item_group"),
-		"stock_uom": d.get("stock_uom"),
-		"description": d.get("description"),
-		"web_long_description": d.get("web_long_description"),
-		"website_image": d.get("website_image"),
-		"thumbnail": d.get("thumbnail"),
-		"brand": d.get("brand"),
-		"route": d.get("route"),
-		"slideshow": d.get("slideshow"),
-		"has_variants": d.get("has_variants"),
+		"name": it.name,
+		"item_code": it.item_code,
+		"web_item_name": it.item_name,
+		"item_name": it.item_name,
+		"item_group": it.item_group,
+		"stock_uom": it.stock_uom,
+		"description": it.description,
+		"web_long_description": it.description,
+		"website_image": it.image,
+		"thumbnail": it.image,
+		"brand": it.brand,
+		"route": None,
+		"slideshow": None,
+		"has_variants": it.has_variants,
 	}
-	_enrich(out, pl, None)
+	rates = _rates_for([it.item_code], pl)
+	pr = rates.get(it.item_code)
+	out["price_list_rate"] = pr.get("price_list_rate") if pr else None
+	out["price_currency"]  = pr.get("currency") if pr else None
+	out["price_uom"]       = pr.get("uom") if pr else None
+	out["min_qty"]         = None
+	out["farms"]    = _farms_for_item(it.name)
+	out["in_season"] = _in_season(it.name)
 	return out
 
 

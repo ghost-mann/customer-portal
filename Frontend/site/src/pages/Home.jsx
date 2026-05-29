@@ -44,7 +44,7 @@ export default function Home({ content, navigate, isLoggedIn }) {
               <a className="btn btn-primary" onClick={() => navigate(hero.cta_link || '/varieties')}>
                 {hero.cta_label || 'See our catalogue'}<Icon name="arrow_forward" />
               </a>
-              <a className="btn btn-ghost" href={isLoggedIn ? '/portal' : '/login?redirect-to=/portal'}>
+              <a className="btn btn-ghost" href={isLoggedIn ? '/customer-portal' : '/login?redirect-to=/customer-portal'}>
                 <Icon name="login" />Member login
               </a>
             </div>

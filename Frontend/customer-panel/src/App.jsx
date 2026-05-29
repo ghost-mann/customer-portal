@@ -61,8 +61,8 @@ export default function App() {
             <Icon name="block" style={{ fontSize: 38, color: 'var(--text-3)' }} />
             <div style={{ fontFamily: 'var(--serif)', fontSize: 22, marginTop: 12, marginBottom: 8 }}>Can't reach your customer record</div>
             <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6, marginBottom: 18 }}>{loadError}</div>
-            <a className="btn btn-primary" href="/portal">
-              <Icon name="arrow_back" /> Back to portal
+            <a className="btn btn-primary" href="/login">
+              <Icon name="arrow_back" /> Sign in again
             </a>
           </div>
         </div>

@@ -1,11 +1,12 @@
 import { initials, shortUser } from '@shared/utils';
+import Logo from '@shared/Logo';
 
 export default function Nav({ user, fullName, isGuest, onLogout }) {
   return (
     <nav className="nav">
       <a href="/portal" className="brand">
-        <div className="brand-mark">AF</div>
-        <b>agriflow</b>
+        <div className="brand-mark"><Logo /></div>
+        <b>Karen Roses</b>
       </a>
       <div className="nav-right">
         {isGuest ? (

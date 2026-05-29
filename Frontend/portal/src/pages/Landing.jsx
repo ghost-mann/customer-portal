@@ -40,7 +40,7 @@ export default function Landing({ fullName, tiles }) {
 
       <div className="tiles-wrap">
         <div className="tiles">
-          {['customer', 'crm', 'webshop'].map((key) => {
+          {['customer', 'webshop'].map((key) => {
             const def = TILE_DEFS[key];
             const state = t[key] || { enabled: true };
             return (

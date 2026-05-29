@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { NAV } from '../nav';
 import Icon from './Icon';
 import { useStore } from '../store';
-import { fmt } from '@shared/utils';
+import { fmt, initials } from '@shared/utils';
+import { getBoot } from '@shared/api';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 
 function groupCount(section, data, mailCounts) {
@@ -23,7 +25,7 @@ const MAIL_SUB_COUNT = {
   crm_leads: 'crm_leads', crm_opps: 'crm_opps', crm_customers: 'crm_customers', crm_quotations: 'crm_quotations',
 };
 
-export default function Sidebar({ onCompose }) {
+export default function Sidebar({ onCompose, onSettings }) {
   const section = useStore((s) => s.section);
   const table = useStore((s) => s.table);
   const select = useStore((s) => s.select);
@@ -36,25 +38,52 @@ export default function Sidebar({ onCompose }) {
   const toggle = (sec) => setOpen((o) => ({ ...o, [sec]: !o[sec] }));
 
   return (
-    <aside className="bg-surface-2 border-r border-line overflow-y-auto flex flex-col pt-2.5 pb-4">
-      <div className="px-2.5 pb-2">
-        <button onClick={onCompose} className="w-full h-9 bg-maroon text-white rounded-[5px] text-[13px] font-semibold flex items-center justify-center gap-2 hover:bg-maroon-2 transition-colors">
-          <Icon name="edit_square" className="text-[18px]" />Compose
-        </button>
-      </div>
-      {NAV.map((grp) => (
-        <div key={grp.label}>
-          <div className="font-mono text-[9px] font-semibold text-ink-3 uppercase tracking-[0.14em] px-3.5 pt-3 pb-1.5">{grp.label}</div>
-          {grp.items.map((it) =>
-            it.type === 'item' ? (
-              <NavItem key={it.section} it={it} active={section === it.section && !table} onClick={() => handleSelect(it.section)} />
-            ) : (
-              <NavGroup key={it.section} it={it} section={section} table={table} open={!!open[it.section]} onToggle={() => toggle(it.section)} onSelect={handleSelect} />
-            ),
-          )}
+    <aside className="bg-surface-2 border-r border-line flex flex-col overflow-hidden">
+      <div className="flex-1 overflow-y-auto crm-scroll pt-2.5 pb-2">
+        <div className="px-2.5 pb-2">
+          <button onClick={onCompose} className="w-full h-9 bg-maroon text-white rounded-[5px] text-[13px] font-semibold flex items-center justify-center gap-2 hover:bg-maroon-2 transition-colors">
+            <Icon name="edit_square" className="text-[18px]" />Compose
+          </button>
         </div>
-      ))}
+        {NAV.map((grp) => (
+          <div key={grp.label}>
+            <div className="font-mono text-[9px] font-semibold text-ink-3 uppercase tracking-[0.14em] px-3.5 pt-3 pb-1.5">{grp.label}</div>
+            {grp.items.map((it) =>
+              it.type === 'item' ? (
+                <NavItem key={it.section} it={it} active={section === it.section && !table} onClick={() => handleSelect(it.section)} />
+              ) : (
+                <NavGroup key={it.section} it={it} section={section} table={table} open={!!open[it.section]} onToggle={() => toggle(it.section)} onSelect={handleSelect} />
+              ),
+            )}
+          </div>
+        ))}
+      </div>
+      <UserFooter onSettings={onSettings} />
     </aside>
+  );
+}
+
+function UserFooter({ onSettings }) {
+  const boot = getBoot();
+  const name = boot.fullName || boot.user || 'User';
+  const email = boot.user || '';
+  const img = typeof window !== 'undefined' ? window.frappe_user_image : '';
+  return (
+    <button
+      onClick={onSettings}
+      title="Settings"
+      className="flex items-center gap-2.5 px-3 py-2.5 border-t border-line hover:bg-hover text-left w-full shrink-0"
+    >
+      <Avatar className="h-8 w-8">
+        {img ? <AvatarImage src={img} alt={name} /> : null}
+        <AvatarFallback>{initials(name)}</AvatarFallback>
+      </Avatar>
+      <div className="min-w-0 flex-1">
+        <div className="text-xs font-medium text-ink truncate">{name}</div>
+        <div className="text-[10px] text-ink-3 font-mono truncate">{email}</div>
+      </div>
+      <Icon name="settings" className="text-[16px] text-ink-3" />
+    </button>
   );
 }
 

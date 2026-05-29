@@ -21,9 +21,14 @@ def get_context(context):
 	if not (roles & CRM_ROLES):
 		frappe.throw(_("You do not have access to the CRM."), frappe.PermissionError)
 
+	full_name, user_image = frappe.db.get_value(
+		"User", frappe.session.user, ["full_name", "user_image"]
+	) or (None, None)
+
 	context.boot = {
-		"csrf_token":       frappe.sessions.get_csrf_token(),
-		"frappe_user":      frappe.session.user,
-		"frappe_user_full": frappe.db.get_value("User", frappe.session.user, "full_name") or frappe.session.user,
+		"csrf_token":        frappe.sessions.get_csrf_token(),
+		"frappe_user":       frappe.session.user,
+		"frappe_user_full":  full_name or frappe.session.user,
+		"frappe_user_image": user_image or "",
 	}
 	return context

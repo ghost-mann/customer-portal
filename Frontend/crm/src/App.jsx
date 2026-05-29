@@ -41,7 +41,7 @@ export default function App() {
     <div className="flex flex-col h-screen text-ink">
       <TopBar onSettings={() => setSettingsOpen(true)} />
       <div className="grid grid-cols-[230px_1fr] h-[calc(100vh-48px)]">
-        <Sidebar onCompose={() => setComposeOpen(true)} />
+        <Sidebar onCompose={() => setComposeOpen(true)} onSettings={() => setSettingsOpen(true)} />
         <main className="bg-surface overflow-hidden flex flex-col">
           <div className="flex items-end justify-between gap-3 px-5 pt-3.5 pb-2.5 border-b border-line">
             <div>

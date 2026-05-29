@@ -73,6 +73,9 @@ website_route_rules = [
 # 	"Role": "home_page"
 # }
 
+# Send website users (customers) straight to the customer portal on login.
+get_website_user_home_page = "agriflow.api.portal.get_user_home_page"
+
 # Generators
 # ----------
 

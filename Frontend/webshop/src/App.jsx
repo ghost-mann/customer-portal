@@ -46,8 +46,8 @@ export default function App() {
             <div style={{ fontSize: 13.5, color: 'var(--text-2)', lineHeight: 1.6, marginBottom: 18 }}>
               {ctxError}
             </div>
-            <a className="btn btn-primary" href="/portal">
-              <Icon name="arrow_back" />Back to portal
+            <a className="btn btn-primary" href="/customer-portal">
+              <Icon name="arrow_back" />Back to customer portal
             </a>
           </div>
         </div>

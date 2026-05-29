@@ -1,6 +1,7 @@
 import { useStore } from '../store';
 import { initials, shortUser } from '@shared/utils';
 import Icon from '@shared/Icon';
+import Logo from '@shared/Logo';
 import ImpersonatePicker from '@shared/ImpersonatePicker';
 
 export default function Nav() {
@@ -9,9 +10,9 @@ export default function Nav() {
 
   return (
     <nav className="nav">
-      <a href="/portal" className="brand">
-        <div className="brand-mark">AF</div>
-        <span>agriflow</span>
+      <a href="/customer-portal" className="brand">
+        <div className="brand-mark"><Logo /></div>
+        <span>Karen Roses</span>
       </a>
       <div className="brand-sub">Shop</div>
 
@@ -37,11 +38,7 @@ export default function Nav() {
           title="Staff: shop on behalf of a customer"
           clearLabel="Stop impersonating"
         />
-        <a className="nav-link" href="/portal" title="Back to portal">
-          <Icon name="apps" />
-          <span>Portal</span>
-        </a>
-        <a className="nav-link" href="/customer-portal" title="Customer panel">
+        <a className="nav-link" href="/customer-portal" title="Customer portal">
           <Icon name="person" />
           <span>My account</span>
         </a>
