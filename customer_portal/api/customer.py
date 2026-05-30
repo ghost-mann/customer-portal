@@ -375,6 +375,79 @@ def get_doc(doctype_kind: str, name: str) -> dict:
 	return doc.as_dict()
 
 
+# ── Message reply ──────────────────────────────────────────────────────────────
+
+@frappe.whitelist()
+def reply_to_message(name: str, content: str = "", customer: str | None = None) -> dict:
+	"""Reply to a Communication as the current customer.
+
+	Records the reply as a new Communication linked to the same Customer (so it
+	shows up in the customer's message thread) and emails it to the other party
+	— the sender of the original message, or, if the customer was the original
+	sender, the original recipients."""
+	cust = _resolve_customer(customer)
+	if not (content or "").strip():
+		frappe.throw(_("Your reply is empty."))
+
+	orig = frappe.get_doc("Communication", name)
+	# Defense in depth: the original must belong to this customer
+	if orig.reference_doctype != "Customer" or orig.reference_name != cust:
+		if not _is_staff():
+			frappe.throw(_("Not your message."), frappe.PermissionError)
+
+	# Reply to the other party. A "Sent" message was sent to the customer, so
+	# its sender is the counterparty; a "Received" message came from the
+	# customer, so its recipients are the counterparty.
+	reply_to = orig.sender if orig.sent_or_received == "Sent" else orig.recipients
+	if not reply_to:
+		frappe.throw(_("Couldn't work out who to reply to on this message."))
+
+	subject = (orig.subject or "(no subject)").strip()
+	if not subject.lower().startswith("re:"):
+		subject = f"Re: {subject}"
+
+	sender = frappe.session.user
+	sender_name = frappe.db.get_value("User", sender, "full_name") or sender
+
+	comm = frappe.get_doc({
+		"doctype": "Communication",
+		"communication_type": "Communication",
+		"communication_medium": "Email",
+		"sent_or_received": "Sent",
+		"subject": subject,
+		"content": content,
+		"sender": sender,
+		"sender_full_name": sender_name,
+		"recipients": reply_to,
+		"reference_doctype": "Customer",
+		"reference_name": cust,
+		"in_reply_to": orig.name,
+	})
+	comm.insert(ignore_permissions=True)
+
+	try:
+		frappe.sendmail(
+			recipients=[r.strip() for r in reply_to.split(",") if r.strip()],
+			sender=sender,
+			subject=subject,
+			message=content,
+			communication=comm.name,
+		)
+		status = "sent"
+	except Exception as e:
+		status = f"queued (mail not configured: {e})"
+
+	# Mark the original as replied if it was an open inbound message
+	try:
+		if orig.sent_or_received == "Received" and orig.status == "Open":
+			orig.db_set("status", "Replied")
+	except Exception:
+		pass
+
+	frappe.db.commit()
+	return {"name": comm.name, "status": status, "recipients": reply_to, "subject": subject}
+
+
 # ── Submissions ──────────────────────────────────────────────────────────────
 
 def _read_payload(payload) -> dict:

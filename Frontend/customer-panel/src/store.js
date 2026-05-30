@@ -105,6 +105,16 @@ export const useStore = create((set, get) => ({
     }
   },
 
+  async replyMessage(name, content) {
+    const html = String(content || '').trim().replace(/\n/g, '<br>');
+    const res = await apiPost('customer_portal.api.customer.reply_to_message', {
+      ...get()._args(), name, content: html,
+    });
+    // Refresh the thread so the new reply appears in the list
+    get().loadList('messages');
+    return res;
+  },
+
   async submitClaim(payload) {
     return apiPost('customer_portal.api.customer.submit_claim', payload);
   },
