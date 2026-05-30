@@ -348,9 +348,10 @@ KIND_TO_DOCTYPE = {
 
 
 @frappe.whitelist()
-def get_doc(doctype_kind: str, name: str) -> dict:
-	"""Return the full doc + its child tables, scoped to current customer."""
-	cust = _resolve_customer()
+def get_doc(doctype_kind: str, name: str, customer: str | None = None) -> dict:
+	"""Return the full doc + its child tables, scoped to current customer.
+	Staff may pass `customer` to view a doc while impersonating that customer."""
+	cust = _resolve_customer(customer)
 	dt = KIND_TO_DOCTYPE.get(doctype_kind)
 	if not dt:
 		frappe.throw(_("Unknown kind: {0}").format(doctype_kind))

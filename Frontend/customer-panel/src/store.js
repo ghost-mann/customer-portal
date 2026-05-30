@@ -98,7 +98,7 @@ export const useStore = create((set, get) => ({
   async loadDetail(kind, name) {
     set({ detail: { kind, name, doc: null, loading: true, err: null } });
     try {
-      const doc = await api('customer_portal.api.customer.get_doc', { doctype_kind: kind, name });
+      const doc = await api('customer_portal.api.customer.get_doc', { ...get()._args(), doctype_kind: kind, name });
       set({ detail: { kind, name, doc, loading: false, err: null } });
     } catch (e) {
       set({ detail: { kind, name, doc: null, loading: false, err: e.message } });
