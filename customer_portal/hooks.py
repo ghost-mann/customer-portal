@@ -1,12 +1,12 @@
-app_name = "agriflow"
-app_title = "Agriflow"
+app_name = "customer_portal"
+app_title = "Customer Portal"
 app_publisher = "Upande"
 app_description = "Farm management platform for Upande client farms"
 app_email = "support@upande.com"
 app_license = "mit"
 
 # All public marketing routes serve the same React SPA shell from
-# agriflow/www/home.html. The React app reads window.location.pathname
+# customer_portal/www/home.html. The React app reads window.location.pathname
 # to pick which page component to render.
 website_route_rules = [
 	{"from_route": "/about",     "to_route": "home"},
@@ -22,11 +22,11 @@ website_route_rules = [
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
 # 	{
-# 		"name": "agriflow",
-# 		"logo": "/assets/agriflow/logo.png",
-# 		"title": "Agriflow",
-# 		"route": "/agriflow",
-# 		"has_permission": "agriflow.api.permission.has_app_permission"
+# 		"name": "customer_portal",
+# 		"logo": "/assets/customer_portal/logo.png",
+# 		"title": "Customer Portal",
+# 		"route": "/customer_portal",
+# 		"has_permission": "customer_portal.api.permission.has_app_permission"
 # 	}
 # ]
 
@@ -34,15 +34,15 @@ website_route_rules = [
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/agriflow/css/agriflow.css"
-# app_include_js = "/assets/agriflow/js/agriflow.js"
+# app_include_css = "/assets/customer_portal/css/customer_portal.css"
+# app_include_js = "/assets/customer_portal/js/customer_portal.js"
 
 # include js, css files in header of web template
-# web_include_css = "/assets/agriflow/css/agriflow.css"
-# web_include_js = "/assets/agriflow/js/agriflow.js"
+# web_include_css = "/assets/customer_portal/css/customer_portal.css"
+# web_include_js = "/assets/customer_portal/js/customer_portal.js"
 
 # include custom scss in every website theme (without file extension ".scss")
-# website_theme_scss = "agriflow/public/scss/website"
+# website_theme_scss = "customer_portal/public/scss/website"
 
 # include js, css files in header of web form
 # webform_include_js = {"doctype": "public/js/doctype.js"}
@@ -60,7 +60,7 @@ website_route_rules = [
 # Svg Icons
 # ------------------
 # include app icons in desk
-# app_include_icons = "agriflow/public/icons.svg"
+# app_include_icons = "customer_portal/public/icons.svg"
 
 # Home Pages
 # ----------
@@ -74,7 +74,7 @@ website_route_rules = [
 # }
 
 # Send website users (customers) straight to the customer portal on login.
-get_website_user_home_page = "agriflow.api.portal.get_user_home_page"
+get_website_user_home_page = "customer_portal.api.portal.get_user_home_page"
 
 # Generators
 # ----------
@@ -87,43 +87,43 @@ get_website_user_home_page = "agriflow.api.portal.get_user_home_page"
 
 # add methods and filters to jinja environment
 # jinja = {
-# 	"methods": "agriflow.utils.jinja_methods",
-# 	"filters": "agriflow.utils.jinja_filters"
+# 	"methods": "customer_portal.utils.jinja_methods",
+# 	"filters": "customer_portal.utils.jinja_filters"
 # }
 
 # Installation
 # ------------
 
-# before_install = "agriflow.install.before_install"
-# after_install = "agriflow.install.after_install"
+# before_install = "customer_portal.install.before_install"
+# after_install = "customer_portal.install.after_install"
 
 # Uninstallation
 # ------------
 
-# before_uninstall = "agriflow.uninstall.before_uninstall"
-# after_uninstall = "agriflow.uninstall.after_uninstall"
+# before_uninstall = "customer_portal.uninstall.before_uninstall"
+# after_uninstall = "customer_portal.uninstall.after_uninstall"
 
 # Integration Setup
 # ------------------
 # To set up dependencies/integrations with other apps
 # Name of the app being installed is passed as an argument
 
-# before_app_install = "agriflow.utils.before_app_install"
-# after_app_install = "agriflow.utils.after_app_install"
+# before_app_install = "customer_portal.utils.before_app_install"
+# after_app_install = "customer_portal.utils.after_app_install"
 
 # Integration Cleanup
 # -------------------
 # To clean up dependencies/integrations with other apps
 # Name of the app being uninstalled is passed as an argument
 
-# before_app_uninstall = "agriflow.utils.before_app_uninstall"
-# after_app_uninstall = "agriflow.utils.after_app_uninstall"
+# before_app_uninstall = "customer_portal.utils.before_app_uninstall"
+# after_app_uninstall = "customer_portal.utils.after_app_uninstall"
 
 # Desk Notifications
 # ------------------
 # See frappe.core.notifications.get_notification_config
 
-# notification_config = "agriflow.notifications.get_notification_config"
+# notification_config = "customer_portal.notifications.get_notification_config"
 
 # Permissions
 # -----------
@@ -162,39 +162,39 @@ get_website_user_home_page = "agriflow.api.portal.get_user_home_page"
 
 # scheduler_events = {
 # 	"all": [
-# 		"agriflow.tasks.all"
+# 		"customer_portal.tasks.all"
 # 	],
 # 	"daily": [
-# 		"agriflow.tasks.daily"
+# 		"customer_portal.tasks.daily"
 # 	],
 # 	"hourly": [
-# 		"agriflow.tasks.hourly"
+# 		"customer_portal.tasks.hourly"
 # 	],
 # 	"weekly": [
-# 		"agriflow.tasks.weekly"
+# 		"customer_portal.tasks.weekly"
 # 	],
 # 	"monthly": [
-# 		"agriflow.tasks.monthly"
+# 		"customer_portal.tasks.monthly"
 # 	],
 # }
 
 # Testing
 # -------
 
-# before_tests = "agriflow.install.before_tests"
+# before_tests = "customer_portal.install.before_tests"
 
 # Overriding Methods
 # ------------------------------
 #
 # override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "agriflow.event.get_events"
+# 	"frappe.desk.doctype.event.event.get_events": "customer_portal.event.get_events"
 # }
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
 # override_doctype_dashboards = {
-# 	"Task": "agriflow.task.get_dashboard_data"
+# 	"Task": "customer_portal.task.get_dashboard_data"
 # }
 
 # exempt linked doctypes from being automatically cancelled
@@ -208,13 +208,13 @@ get_website_user_home_page = "agriflow.api.portal.get_user_home_page"
 
 # Request Events
 # ----------------
-# before_request = ["agriflow.utils.before_request"]
-# after_request = ["agriflow.utils.after_request"]
+# before_request = ["customer_portal.utils.before_request"]
+# after_request = ["customer_portal.utils.after_request"]
 
 # Job Events
 # ----------
-# before_job = ["agriflow.utils.before_job"]
-# after_job = ["agriflow.utils.after_job"]
+# before_job = ["customer_portal.utils.before_job"]
+# after_job = ["customer_portal.utils.after_job"]
 
 # User Data Protection
 # --------------------
@@ -244,7 +244,7 @@ get_website_user_home_page = "agriflow.api.portal.get_user_home_page"
 # --------------------------------
 
 # auth_hooks = [
-# 	"agriflow.auth.validate"
+# 	"customer_portal.auth.validate"
 # ]
 
 # Automatically update python controller files with type annotations for this app.

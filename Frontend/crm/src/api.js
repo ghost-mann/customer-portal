@@ -2,7 +2,7 @@
 // Method names match the source page exactly (POST /api/method/<name>).
 import { api } from '@shared/api';
 
-const M = 'agriflow.api.crm.';
+const M = 'customer_portal.api.crm.';
 export const getOverview      = (args) => api(M + 'crm_dashboard_overview', args);
 export const getLeads         = (args) => api(M + 'crm_dashboard_leads', args);
 export const getOpportunities = (args) => api(M + 'crm_dashboard_opportunities', args);

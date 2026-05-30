@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { api } from '@shared/api';
 
-const IMPER_KEY = 'agriflow_shop_impersonate';
+const IMPER_KEY = 'customer_portal_shop_impersonate';
 function loadImpersonate() {
   try { return sessionStorage.getItem(IMPER_KEY) || null; } catch (e) { return null; }
 }
@@ -76,7 +76,7 @@ export const useStore = create((set, get) => ({
   async bootstrap() {
     set({ loadingCtx: true, ctxError: null });
     try {
-      const ctx = await api('agriflow.api.customer.get_my_context', get()._args());
+      const ctx = await api('customer_portal.api.customer.get_my_context', get()._args());
       set({ ctx, loadingCtx: false });
       // Eager-load shop data
       get().loadCategories();
@@ -90,14 +90,14 @@ export const useStore = create((set, get) => ({
 
   async loadCategories() {
     try {
-      const r = await api('agriflow.api.webshop.list_categories', get()._args());
+      const r = await api('customer_portal.api.webshop.list_categories', get()._args());
       set({ categories: r || [] });
     } catch (e) { set({ categories: [] }); }
   },
 
   async loadFarms() {
     try {
-      const r = await api('agriflow.api.webshop.list_farms', get()._args());
+      const r = await api('customer_portal.api.webshop.list_farms', get()._args());
       set({ farms: r || [] });
     } catch (e) { set({ farms: [] }); }
   },
@@ -106,7 +106,7 @@ export const useStore = create((set, get) => ({
     set({ loadingItems: true, itemsError: null });
     const f = get().filters;
     try {
-      const r = await api('agriflow.api.webshop.list_items', get()._args({
+      const r = await api('customer_portal.api.webshop.list_items', get()._args({
         category:  f.category,
         search:    f.search,
         farm:      f.farm,
@@ -122,7 +122,7 @@ export const useStore = create((set, get) => ({
   async loadDetail(name) {
     set({ detail: { item: null, loading: true, err: null } });
     try {
-      const item = await api('agriflow.api.webshop.get_item', get()._args({ name }));
+      const item = await api('customer_portal.api.webshop.get_item', get()._args({ name }));
       set({ detail: { item, loading: false, err: null } });
     } catch (e) {
       set({ detail: { item: null, loading: false, err: e.message } });
@@ -133,7 +133,7 @@ export const useStore = create((set, get) => ({
   async loadCart() {
     set({ loadingCart: true, cartError: null });
     try {
-      const cart = await api('agriflow.api.webshop.get_cart', get()._args());
+      const cart = await api('customer_portal.api.webshop.get_cart', get()._args());
       set({ cart, loadingCart: false });
     } catch (e) {
       set({ loadingCart: false, cartError: e.message });
@@ -160,7 +160,7 @@ export const useStore = create((set, get) => ({
   async addToCart(item_code, qty = 1) {
     if (!get()._requireCustomer()) return null;
     try {
-      const cart = await api('agriflow.api.webshop.add_to_cart', get()._args({ item_code, qty }));
+      const cart = await api('customer_portal.api.webshop.add_to_cart', get()._args({ item_code, qty }));
       set({ cart });
       get().setToast({ kind: 'ok', message: 'Added to cart' });
       return cart;
@@ -190,7 +190,7 @@ export const useStore = create((set, get) => ({
       // Chain through a single promise to serialize backend writes
       const next = get()._qtyChain.then(async () => {
         try {
-          const fresh = await api('agriflow.api.webshop.update_qty', get()._args({ item_code, qty }));
+          const fresh = await api('customer_portal.api.webshop.update_qty', get()._args({ item_code, qty }));
           set({ cart: fresh });
         } catch (e) {
           get().setToast({ kind: 'err', message: e.message });
@@ -210,7 +210,7 @@ export const useStore = create((set, get) => ({
   async clearCart() {
     if (!get()._requireCustomer()) return;
     try {
-      const cart = await api('agriflow.api.webshop.clear_cart', get()._args());
+      const cart = await api('customer_portal.api.webshop.clear_cart', get()._args());
       set({ cart });
     } catch (e) {}
   },
@@ -218,7 +218,7 @@ export const useStore = create((set, get) => ({
   async submitQuotation(notes) {
     if (!get()._requireCustomer()) return;
     try {
-      const r = await api('agriflow.api.webshop.submit_quotation', get()._args({ notes: notes || '' }));
+      const r = await api('customer_portal.api.webshop.submit_quotation', get()._args({ notes: notes || '' }));
       set({ view: 'confirmation', confirmation: r, cart: null, cartOpen: false });
       return r;
     } catch (e) {

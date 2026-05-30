@@ -35,7 +35,7 @@ export default function Landing({ fullName, tiles }) {
       <div className="hero">
         <div className="label">{fullName ? `Welcome, ${fullName}` : 'Member portal'}</div>
         <h1>Pick where you'd like to <em>go</em>.</h1>
-        <p>Agriflow links you to the tools your role unlocks — sales for the team, claims and orders for customers, and the live catalogue for both.</p>
+        <p>Customer Portal links you to the tools your role unlocks — sales for the team, claims and orders for customers, and the live catalogue for both.</p>
       </div>
 
       <div className="tiles-wrap">

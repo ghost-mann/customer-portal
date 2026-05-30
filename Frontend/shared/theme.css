@@ -1,4 +1,4 @@
-/* Shared design tokens for all agriflow frontends.
+/* Shared design tokens for all customer_portal frontends.
  *
  * Imported first in each area's main.jsx (before that area's styles.css), so an
  * area can override any token by redefining it in its own :root afterwards.

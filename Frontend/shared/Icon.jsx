@@ -1,4 +1,4 @@
-// Material Symbols icon. Shared across all agriflow frontends.
+// Material Symbols icon. Shared across all customer_portal frontends.
 //   import Icon from '@shared/Icon';
 export default function Icon({ name, style, className }) {
   return (

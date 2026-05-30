@@ -9,7 +9,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        // Poppins everywhere (consistent with the other agriflow sections).
+        // Poppins everywhere (consistent with the other customer_portal sections).
         sans: ['Poppins', 'system-ui', 'sans-serif'],
         mono: ['Poppins', 'system-ui', 'sans-serif'],
       },

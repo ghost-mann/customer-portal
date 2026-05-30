@@ -1,7 +1,7 @@
-"""Server-side boot context for the Agriflow customer portal at /customer-portal.
+"""Server-side boot context for the Customer Portal customer portal at /customer-portal.
 
 Requires login. Boot exposes csrf token + user info; the rest of the data
-is loaded by the React app via agriflow.api.customer.* methods.
+is loaded by the React app via customer_portal.api.customer.* methods.
 """
 
 import frappe

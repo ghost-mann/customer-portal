@@ -1,4 +1,4 @@
-"""Public site backend for the agriflow marketing pages.
+"""Public site backend for the customer_portal marketing pages.
 
 These endpoints are reachable without authentication (allow_guest=True) so the
 React marketing site can render for visitors.
@@ -25,7 +25,7 @@ def get_site_content() -> dict:
 	"""Return everything the marketing site needs in one call: branding, hero,
 	value props, about, stats, varieties, gallery, contact, social, footer."""
 	try:
-		s = frappe.get_single("Agriflow Site Settings")
+		s = frappe.get_single("Customer Portal Site Settings")
 	except frappe.DoesNotExistError:
 		s = None
 
@@ -62,7 +62,7 @@ def get_site_content() -> dict:
 
 	return {
 		"brand": {
-			"name": f("brand_name", "Agriflow"),
+			"name": f("brand_name", "Customer Portal"),
 			"tagline": f("brand_tagline", "Farm-direct, every season"),
 		},
 		"hero": {
@@ -70,7 +70,7 @@ def get_site_content() -> dict:
 			"eyebrow": f("hero_eyebrow", "FROM OUR FARMS"),
 			"title": f("hero_title", "Fresh from the field, straight to you."),
 			"subtitle": f("hero_subtitle",
-				"Agriflow links you to a network of family-run farms across East Africa. "
+				"Customer Portal links you to a network of family-run farms across East Africa. "
 				"Cut-to-order roses, hass avocados, specialty coffee — picked fresh, "
 				"packed cold, shipped fast."),
 			"cta_label": f("hero_cta_label", "See our catalogue"),
@@ -105,7 +105,7 @@ def get_site_content() -> dict:
 			"facebook": f("social_facebook"),
 		},
 		"footer": {
-			"text": f("footer_text", "Agriflow · Upande Ltd"),
+			"text": f("footer_text", "Customer Portal · Upande Ltd"),
 			"show_powered_by": int(f("show_powered_by", 1) or 0),
 		},
 	}
@@ -126,7 +126,7 @@ def submit_contact_inquiry(payload=None, **kwargs) -> dict:
 	company = (data.get("company") or "").strip()
 	subject = (data.get("subject") or "Website inquiry").strip()
 	message = (data.get("message") or "").strip()
-	source  = data.get("source") or "Agriflow Site"
+	source  = data.get("source") or "Customer Portal Site"
 
 	# Light validation
 	if not name or not email or not message:
@@ -164,7 +164,7 @@ def submit_contact_inquiry(payload=None, **kwargs) -> dict:
 	try:
 		lead.insert(ignore_permissions=True)
 	except Exception as e:
-		frappe.log_error(message=str(e), title="Agriflow contact inquiry insert failed")
+		frappe.log_error(message=str(e), title="Customer Portal contact inquiry insert failed")
 		# Fall back to a ToDo for the admins
 		todo = frappe.new_doc("ToDo")
 		todo.description = (

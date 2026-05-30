@@ -1,4 +1,4 @@
-"""Server-side boot for the Agriflow public marketing SPA.
+"""Server-side boot for the Customer Portal public marketing SPA.
 
 Same template is served at /, /home, /about, /varieties, /contact via
 website_route_rules in hooks.py. Guests are allowed; the React app reads

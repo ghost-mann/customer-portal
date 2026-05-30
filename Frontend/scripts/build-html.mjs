@@ -2,7 +2,7 @@
 // matching Frappe www/ template, injecting the Jinja boot block (the per-page
 // `boot` dict is exposed on window.* for the SPA to read).
 //
-// One build emits agriflow/public/frontend/<area>/index.html; this maps each
+// One build emits customer_portal/public/frontend/<area>/index.html; this maps each
 // to its public route. Marketing (/about, /varieties, /contact) is aliased to
 // home.html by website_route_rules in hooks.py.
 
@@ -12,8 +12,8 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT  = path.resolve(__dirname, '..');
-const BUILT = path.resolve(ROOT, '../agriflow/public/frontend');
-const WWW   = path.resolve(ROOT, '../agriflow/www');
+const BUILT = path.resolve(ROOT, '../customer_portal/public/frontend');
+const WWW   = path.resolve(ROOT, '../customer_portal/www');
 
 // area folder → www template filename
 const ROUTES = {
@@ -35,10 +35,10 @@ const JINJA_BOOT = `
 // Inline the area's emitted stylesheet into the HTML so styles are parsed with
 // the document (no separate render-blocking request that can paint late).
 async function inlineCss(html) {
-  const linkRe = /<link rel="stylesheet"[^>]*href="(\/assets\/agriflow\/frontend\/assets\/[^"]+\.css)"[^>]*>/g;
+  const linkRe = /<link rel="stylesheet"[^>]*href="(\/assets\/customer_portal\/frontend\/assets\/[^"]+\.css)"[^>]*>/g;
   let out = html;
   for (const m of html.matchAll(linkRe)) {
-    const rel = m[1].replace('/assets/agriflow/frontend/', '');
+    const rel = m[1].replace('/assets/customer_portal/frontend/', '');
     try {
       const css = await readFile(path.resolve(BUILT, rel), 'utf8');
       out = out.replace(m[0], `<style>${css}</style>`);

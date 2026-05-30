@@ -1,10 +1,10 @@
-"""Webshop backend for the agriflow customer-facing /website-shop SPA.
+"""Webshop backend for the customer_portal customer-facing /website-shop SPA.
 
 Backed by ERPNext's Website Item + Item Price + Quotation. One open draft
 Quotation per customer acts as their persistent cart. Tags on Website Item
 provide the farm (tag prefix "farm:") and "in-season" filters.
 
-Auth model: identical to agriflow.api.customer — every method scopes to the
+Auth model: identical to customer_portal.api.customer — every method scopes to the
 Customer linked to the current user. Staff users may impersonate.
 """
 
@@ -13,7 +13,7 @@ import time
 import frappe
 from frappe import _
 
-from agriflow.api.customer import _resolve_customer, _is_staff
+from customer_portal.api.customer import _resolve_customer, _is_staff
 
 
 # Karen Roses is a flower farm — the shop only lists floral item groups (rose
@@ -481,7 +481,7 @@ def submit_quotation(notes: str | None = None, customer: str | None = None) -> d
 		frappe.db.commit()
 	except Exception as e:
 		# If submit fails (e.g. validation), keep it as a draft and surface the error
-		frappe.log_error(message=str(e), title="Agriflow webshop submit_quotation")
+		frappe.log_error(message=str(e), title="Customer Portal webshop submit_quotation")
 		frappe.throw(_("Could not submit your request: {0}").format(str(e)))
 
 	return {"name": q.name, "status": "Submitted"}

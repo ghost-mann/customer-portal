@@ -44,7 +44,7 @@ export default function ImpersonatePicker({
   async function fetchList(search) {
     setLoading(true);
     try {
-      const r = await api('agriflow.api.customer.list_customers', { search, limit: 30 });
+      const r = await api('customer_portal.api.customer.list_customers', { search, limit: 30 });
       setRows(r || []);
     } catch (e) { setRows([]); }
     finally { setLoading(false); }

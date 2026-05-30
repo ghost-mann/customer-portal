@@ -9,7 +9,7 @@ export default function Footer({ content, navigate }) {
         <div>
           <div className="foot-brand">
             <div className="brand-mark">AF</div>
-            <span className="brand-text">{c.brand?.name || 'agriflow'}</span>
+            <span className="brand-text">{c.brand?.name || 'Customer Portal'}</span>
           </div>
           <p className="foot-tag">{c.brand?.tagline || 'Farm-direct, every season.'}</p>
         </div>
@@ -40,8 +40,8 @@ export default function Footer({ content, navigate }) {
         </div>
       </div>
       <div className="foot-meta">
-        <span>© {year} · {c.footer?.text || 'Agriflow · Upande Ltd'}</span>
-        {c.footer?.show_powered_by !== 0 && <span>Powered by Agriflow</span>}
+        <span>© {year} · {c.footer?.text || 'Customer Portal · Upande Ltd'}</span>
+        {c.footer?.show_powered_by !== 0 && <span>Powered by Customer Portal</span>}
       </div>
     </footer>
   );

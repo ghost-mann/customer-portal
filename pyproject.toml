@@ -1,5 +1,5 @@
 [project]
-name = "agriflow"
+name = "customer_portal"
 authors = [
     { name = "Upande", email = "support@upande.com"}
 ]

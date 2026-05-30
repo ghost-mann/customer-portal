@@ -12,7 +12,7 @@ export default function App() {
     // (cached) and the tile permissions should reflect current state.
     (async () => {
       try {
-        const r = await api('agriflow.api.portal.get_user_context');
+        const r = await api('customer_portal.api.portal.get_user_context');
         setCtx({
           loading: false,
           user: r.user,
@@ -52,7 +52,7 @@ export default function App() {
         <Landing fullName={ctx.fullName} tiles={ctx.tiles} />
       )}
       <footer className="foot">
-        <div>AGRIFLOW · UPANDE LTD</div>
+        <div>CUSTOMER PORTAL · UPANDE LTD</div>
         <div className="foot-links">
           <a href="/about">About</a>
           <a href="/contact">Contact</a>

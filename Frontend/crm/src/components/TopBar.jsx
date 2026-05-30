@@ -36,7 +36,7 @@ export default function TopBar({ onSettings }) {
     if (q.trim().length < 2) { setCustRows(null); return; }
     custDeb.current = setTimeout(async () => {
       try {
-        const r = await api('agriflow.api.crm.crm_search', { query: q.trim() });
+        const r = await api('customer_portal.api.crm.crm_search', { query: q.trim() });
         setCustRows((r?.results || []).filter((x) => x.doctype === 'Customer'));
       } catch { setCustRows([]); }
     }, 220);

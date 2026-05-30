@@ -20,7 +20,7 @@ export default function App() {
   useEffect(() => {
     (async () => {
       try {
-        const c = await apiGet('agriflow.api.site.get_site_content');
+        const c = await apiGet('customer_portal.api.site.get_site_content');
         setContent(c);
       } catch (e) {
         setContent({});
@@ -42,7 +42,7 @@ export default function App() {
   if (!content) {
     return (
       <>
-        <Nav page={page} navigate={navigate} brand={{ name: 'agriflow' }} isLoggedIn={!!user} />
+        <Nav page={page} navigate={navigate} brand={{ name: 'Customer Portal' }} isLoggedIn={!!user} />
         <div className="loading" style={{ paddingTop: 120 }}>Loading</div>
       </>
     );

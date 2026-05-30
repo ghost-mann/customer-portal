@@ -1,11 +1,11 @@
 import { useState } from 'react';
 
 // Karen Roses brand mark. Renders the logo image if present, otherwise a "KR"
-// monogram fallback. Drop the real file at agriflow/public/logo.png (served at
-// /assets/agriflow/logo.png) and it appears everywhere automatically.
+// monogram fallback. Drop the real file at customer_portal/public/logo.png (served at
+// /assets/customer_portal/logo.png) and it appears everywhere automatically.
 //   import Logo from '@shared/Logo';
 //   <div className="brand-mark"><Logo /></div>
-const SRC = '/assets/agriflow/logo.png';
+const SRC = '/assets/customer_portal/logo.png';
 
 export default function Logo({ fallback = 'KR', alt = 'Karen Roses' }) {
   const [ok, setOk] = useState(true);

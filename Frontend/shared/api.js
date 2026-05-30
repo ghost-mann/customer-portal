@@ -1,4 +1,4 @@
-// Shared Frappe API client for all agriflow frontends.
+// Shared Frappe API client for all customer_portal frontends.
 //
 // Consumed via the `@shared` Vite alias (see each app's vite.config.js):
 //   import { api, apiGet, apiPost, getBoot } from '@shared/api';
@@ -32,7 +32,7 @@ async function refreshCsrf() {
   if (_refreshInflight) return _refreshInflight;
   _refreshInflight = (async () => {
     try {
-      const res = await fetch('/api/method/agriflow.api.customer.get_csrf_token', {
+      const res = await fetch('/api/method/customer_portal.api.customer.get_csrf_token', {
         method: 'GET',
         credentials: 'same-origin',
         headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },

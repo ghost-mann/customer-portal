@@ -1,4 +1,4 @@
-// Shared Vite dev-server proxy config for all agriflow frontends.
+// Shared Vite dev-server proxy config for all customer_portal frontends.
 //
 // Everything is derived at runtime from the bench, so there are no hardcoded
 // ports or site names:
@@ -10,7 +10,7 @@
 // Usage in a frontend's vite.config.js:
 //   import proxyOptions from '../proxyOptions.js';
 //   ...
-//   server: { port: 8084, proxy: proxyOptions('/assets/agriflow/site/') }
+//   server: { port: 8084, proxy: proxyOptions('/assets/customer_portal/site/') }
 
 import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
 import { resolve, dirname } from 'path';

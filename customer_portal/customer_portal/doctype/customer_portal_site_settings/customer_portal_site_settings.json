@@ -17,7 +17,7 @@
  ],
  "fields": [
   {"fieldname": "branding_section", "fieldtype": "Section Break", "label": "Branding"},
-  {"fieldname": "brand_name",       "fieldtype": "Data",          "label": "Brand name", "default": "Agriflow"},
+  {"fieldname": "brand_name",       "fieldtype": "Data",          "label": "Brand name", "default": "Customer Portal"},
   {"fieldname": "brand_tagline",    "fieldtype": "Data",          "label": "Tagline", "default": "Farm-direct, every season"},
 
   {"fieldname": "hero_section",     "fieldtype": "Section Break", "label": "Hero"},
@@ -29,7 +29,7 @@
   {"fieldname": "hero_cta_link",    "fieldtype": "Data",          "label": "Call-to-action link", "default": "/varieties"},
 
   {"fieldname": "value_props_section", "fieldtype": "Section Break", "label": "Value propositions"},
-  {"fieldname": "value_props",         "fieldtype": "Table",          "label": "Value props", "options": "Agriflow Value Prop"},
+  {"fieldname": "value_props",         "fieldtype": "Table",          "label": "Value props", "options": "Customer Portal Value Prop"},
 
   {"fieldname": "about_section",    "fieldtype": "Section Break", "label": "About"},
   {"fieldname": "about_image",      "fieldtype": "Attach Image",  "label": "About image"},
@@ -42,10 +42,10 @@
 
   {"fieldname": "varieties_section",   "fieldtype": "Section Break", "label": "Varieties"},
   {"fieldname": "varieties_intro",     "fieldtype": "Small Text",    "label": "Varieties intro"},
-  {"fieldname": "varieties",           "fieldtype": "Table",          "label": "Varieties", "options": "Agriflow Variety"},
+  {"fieldname": "varieties",           "fieldtype": "Table",          "label": "Varieties", "options": "Customer Portal Variety"},
 
   {"fieldname": "gallery_section",  "fieldtype": "Section Break", "label": "Gallery"},
-  {"fieldname": "gallery",          "fieldtype": "Table",          "label": "Gallery", "options": "Agriflow Gallery Item"},
+  {"fieldname": "gallery",          "fieldtype": "Table",          "label": "Gallery", "options": "Customer Portal Gallery Item"},
 
   {"fieldname": "contact_section",  "fieldtype": "Section Break", "label": "Contact"},
   {"fieldname": "contact_email",    "fieldtype": "Data",          "label": "Contact email", "default": "hello@upande.com"},
@@ -59,16 +59,16 @@
   {"fieldname": "social_facebook",  "fieldtype": "Data",          "label": "Facebook URL"},
 
   {"fieldname": "footer_section",   "fieldtype": "Section Break", "label": "Footer"},
-  {"fieldname": "footer_text",      "fieldtype": "Small Text",    "label": "Footer text", "default": "Agriflow · Upande Ltd"},
-  {"fieldname": "show_powered_by",  "fieldtype": "Check",         "label": "Show \"Powered by Agriflow\"", "default": 1}
+  {"fieldname": "footer_text",      "fieldtype": "Small Text",    "label": "Footer text", "default": "Customer Portal · Upande Ltd"},
+  {"fieldname": "show_powered_by",  "fieldtype": "Check",         "label": "Show \"Powered by Customer Portal\"", "default": 1}
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
  "modified": "2026-05-29 00:00:00.000000",
  "modified_by": "Administrator",
- "module": "Agriflow",
- "name": "Agriflow Site Settings",
+ "module": "Customer Portal",
+ "name": "Customer Portal Site Settings",
  "naming_rule": "Set by user",
  "owner": "Administrator",
  "permissions": [

@@ -23,7 +23,7 @@ export default function Contact({ content }) {
     }
     setSubmitting(true);
     try {
-      const r = await apiPost('agriflow.api.site.submit_contact_inquiry', form);
+      const r = await apiPost('customer_portal.api.site.submit_contact_inquiry', form);
       setOk({ ref: r?.name, kind: r?.kind });
       setForm({ name: '', email: '', phone: '', company: '', subject: '', message: '' });
     } catch (e) {

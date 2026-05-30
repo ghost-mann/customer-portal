@@ -14,7 +14,7 @@ export default function PickCustomer() {
   async function load(s) {
     setLoading(true);
     try {
-      const r = await api('agriflow.api.customer.list_customers', { search: s, limit: 30 });
+      const r = await api('customer_portal.api.customer.list_customers', { search: s, limit: 30 });
       setRows(r || []);
     } catch (e) { setRows([]); }
     finally { setLoading(false); }

@@ -1,4 +1,4 @@
-// Shared formatting/helper utilities for all agriflow frontends.
+// Shared formatting/helper utilities for all customer_portal frontends.
 //   import { fmt, fmtMoney, initials } from '@shared/utils';
 //
 // Superset of what the individual apps used. fmtMoney has two flavours: the

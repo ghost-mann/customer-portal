@@ -3,7 +3,7 @@ import { api } from '@shared/api';
 import { SECTION_LOADERS } from './api';
 
 const SETTINGS_KEY = 'crm_settings';
-const M = 'agriflow.api.crm.';
+const M = 'customer_portal.api.crm.';
 
 export const DEFAULT_SETTINGS = {
   autoRefresh: true,

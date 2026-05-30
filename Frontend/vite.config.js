@@ -7,15 +7,15 @@ import proxyOptions from './proxyOptions.js';
 // keeps its own index.html + src (pages/routes), but they share one
 // node_modules, one config, and one set of vendor chunks (react, zustand).
 //
-// Build output → agriflow/public/frontend/<area>/index.html plus a shared
-// assets/ dir, served by Frappe at /assets/agriflow/frontend/. The four
+// Build output → customer_portal/public/frontend/<area>/index.html plus a shared
+// assets/ dir, served by Frappe at /assets/customer_portal/frontend/. The four
 // existing routes (/, /portal, /website-shop, /customer-portal) are preserved
 // by scripts/build-html.mjs, which writes the four www templates.
 const AREAS = ['portal', 'site', 'webshop', 'customer-panel', 'crm'];
 
 export default defineConfig({
   plugins: [react()],
-  base: '/assets/agriflow/frontend/',
+  base: '/assets/customer_portal/frontend/',
   resolve: {
     alias: {
       '@shared': path.resolve(__dirname, 'shared'),
@@ -24,7 +24,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: path.resolve(__dirname, '../agriflow/public/frontend'),
+    outDir: path.resolve(__dirname, '../customer_portal/public/frontend'),
     emptyOutDir: true,
     sourcemap: false,
     rollupOptions: {
@@ -41,6 +41,6 @@ export default defineConfig({
   server: {
     port: 8080,
     fs: { allow: [__dirname] },
-    proxy: proxyOptions('/assets/agriflow/frontend/'),
+    proxy: proxyOptions('/assets/customer_portal/frontend/'),
   },
 });

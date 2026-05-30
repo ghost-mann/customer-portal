@@ -1,4 +1,4 @@
-"""Server-side boot for the Agriflow customer webshop at /website-shop.
+"""Server-side boot for the Customer Portal customer webshop at /website-shop.
 Requires login. Guests are redirected via the React app's bootstrap error.
 """
 

@@ -1,4 +1,4 @@
-"""Server-side boot context for the Agriflow CRM dashboard at /crm.
+"""Server-side boot context for the Customer Portal CRM dashboard at /crm.
 
 Requires login + a sales/CRM role. Boot exposes the csrf token + user info; the
 React app loads everything else via the crm_dashboard_* whitelisted methods.
@@ -9,7 +9,7 @@ from frappe import _
 
 no_cache = 1
 
-# Mirrors agriflow.api.portal.CRM_ROLES — who may see the sales CRM.
+# Mirrors customer_portal.api.portal.CRM_ROLES — who may see the sales CRM.
 CRM_ROLES = {"System Manager", "Sales Manager", "Sales User", "CRM Manager", "CRM User"}
 
 
