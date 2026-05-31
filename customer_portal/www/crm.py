@@ -30,5 +30,10 @@ def get_context(context):
 		"frappe_user":       frappe.session.user,
 		"frappe_user_full":  full_name or frappe.session.user,
 		"frappe_user_image": user_image or "",
+		# In CRM the user is always sales; expose flags so the shared shell can
+		# render the right tabs without an extra API round-trip.
+		"is_staff":           True,
+		"is_crm":             True,
+		"is_account_manager": frappe.db.exists("Customer", {"account_manager": frappe.session.user}) and True or False,
 	}
 	return context

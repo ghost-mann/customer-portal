@@ -19,9 +19,18 @@ from frappe import _
 
 STAFF_ROLES = {"System Manager", "Sales Manager", "Sales User", "CRM Manager", "CRM User"}
 
+# Roles that may see the CRM section. Kept as its own constant so the CRM tab
+# can diverge from impersonation rights later; today it mirrors STAFF_ROLES.
+CRM_ROLES = {"System Manager", "Sales Manager", "Sales User", "CRM Manager", "CRM User"}
+
 def _is_staff() -> bool:
 	"""Broad staff — may view/impersonate ANY customer."""
 	return bool(set(frappe.get_roles(frappe.session.user)) & STAFF_ROLES)
+
+
+def _is_crm() -> bool:
+	"""True if the user may access the CRM section (drives the nav tab)."""
+	return bool(set(frappe.get_roles(frappe.session.user)) & CRM_ROLES)
 
 
 def _is_account_manager() -> bool:
@@ -211,6 +220,7 @@ def get_my_context(customer: str | None = None) -> dict:
 			"full_name": frappe.db.get_value("User", user, "full_name") or user,
 			"is_staff": _is_staff(),
 			"is_account_manager": _is_account_manager(),
+			"is_crm": _is_crm(),
 			"can_search_all": _is_staff(),
 			"needs_impersonation": True,
 			"customer": None,
@@ -225,6 +235,7 @@ def get_my_context(customer: str | None = None) -> dict:
 			"full_name": frappe.db.get_value("User", user, "full_name") or user,
 			"is_staff": _is_staff(),
 			"is_account_manager": _is_account_manager(),
+			"is_crm": _is_crm(),
 			"can_search_all": _is_staff(),
 			"needs_impersonation": True,
 			"customer": None,
@@ -272,6 +283,7 @@ def get_my_context(customer: str | None = None) -> dict:
 		"payment_terms": pt,
 		"is_staff": _is_staff(),
 		"is_account_manager": _is_account_manager(),
+		"is_crm": _is_crm(),
 		"can_search_all": _is_staff(),
 		# True when the user is viewing an account other than their own contact
 		# link — i.e. a rep/staff member who selected this account.
@@ -449,8 +461,8 @@ def list_messages(customer: str | None = None, limit: int = 100) -> list:
 			"communication_medium": "Email",
 		},
 		fields=[
-			"name", "subject", "sender", "recipients",
-			"sent_or_received", "communication_date", "seen", "status",
+			"name", "subject", "sender", "sender_full_name", "recipients",
+			"sent_or_received", "communication_date", "seen", "status", "content",
 		],
 		order_by="communication_date desc",
 		limit_page_length=int(limit),
@@ -568,6 +580,154 @@ def reply_to_message(name: str, content: str = "", customer: str | None = None) 
 
 	frappe.db.commit()
 	return {"name": comm.name, "status": status, "recipients": reply_to, "subject": subject}
+
+
+@frappe.whitelist()
+def send_message(content: str = "", subject: str | None = None, customer: str | None = None) -> dict:
+	"""Start (or continue) a message thread from the customer portal without an
+	existing message to reply to. Records a Communication linked to the Customer
+	— so it shows in the portal thread — and emails the account manager. Works
+	for the customer and for staff acting on the account (impersonation)."""
+	cust = _resolve_customer(customer)
+	if not (content or "").strip():
+		frappe.throw(_("Your message is empty."))
+
+	# Counterparty: the customer's account manager (a User / email).
+	reply_to = frappe.db.get_value("Customer", cust, "account_manager")
+	if not reply_to or "@" not in str(reply_to):
+		reply_to = None
+
+	subject = (subject or f"Message from {cust}").strip()
+	sender = frappe.session.user
+	sender_name = frappe.db.get_value("User", sender, "full_name") or sender
+
+	comm = frappe.get_doc({
+		"doctype": "Communication",
+		"communication_type": "Communication",
+		"communication_medium": "Email",
+		"sent_or_received": "Sent",
+		"subject": subject,
+		"content": content,
+		"sender": sender,
+		"sender_full_name": sender_name,
+		"recipients": reply_to or "",
+		"reference_doctype": "Customer",
+		"reference_name": cust,
+	})
+	comm.insert(ignore_permissions=True)
+
+	status = "recorded"
+	if reply_to:
+		try:
+			frappe.sendmail(
+				recipients=[r.strip() for r in str(reply_to).split(",") if r.strip()],
+				sender=sender,
+				subject=subject,
+				message=content,
+				communication=comm.name,
+			)
+			status = "sent"
+		except Exception as e:
+			status = f"queued (mail not configured: {e})"
+
+	frappe.db.commit()
+	return {"name": comm.name, "status": status, "recipients": reply_to or None}
+
+
+# ── Claim conversation ───────────────────────────────────────────────────────
+#
+# A claim (Customer Feedback) becomes a two-way thread by attaching Communications
+# to it (reference_doctype="Customer Feedback"). The customer and the team can
+# both post; the customer's posts are emailed to the account manager.
+
+def _assert_claim_owner(name: str, cust: str):
+	"""Load a Customer Feedback and confirm it belongs to `cust`. Returns the doc.
+	Mirrors the ownership check in get_doc's Customer Feedback branch."""
+	doc = frappe.get_doc("Customer Feedback", name)
+	owner = (
+		getattr(doc, "customer_company", None)
+		or getattr(doc, "customer_name", None)
+		or getattr(doc, "customer", None)
+	)
+	if owner and owner != cust and not _is_staff():
+		# `owner` may hold the customer's display name rather than its id; also
+		# accept a match on the Customer link field directly.
+		if getattr(doc, "customer", None) != cust:
+			frappe.throw(_("Not your claim."), frappe.PermissionError)
+	return doc
+
+
+@frappe.whitelist()
+def list_claim_messages(name: str, customer: str | None = None) -> list:
+	"""Conversation attached to a claim, oldest first."""
+	cust = _resolve_customer(customer)
+	_assert_claim_owner(name, cust)
+	return frappe.get_all(
+		"Communication",
+		filters={"reference_doctype": "Customer Feedback", "reference_name": name},
+		fields=[
+			"name", "sender", "sender_full_name", "recipients",
+			"content", "communication_date", "sent_or_received",
+		],
+		order_by="communication_date asc, creation asc",
+	) or []
+
+
+@frappe.whitelist()
+def reply_to_claim(name: str, content: str = "", customer: str | None = None) -> dict:
+	"""Post a message on a claim as the current customer and email it to the team
+	(the customer's account manager, falling back to the claim's creator)."""
+	cust = _resolve_customer(customer)
+	if not (content or "").strip():
+		frappe.throw(_("Your message is empty."))
+
+	claim = _assert_claim_owner(name, cust)
+
+	# Counterparty: the account manager of the claim's customer, then the claim
+	# creator / last editor as a fallback. Only keep it if it's a real email
+	# address — otherwise we still record the message, just don't email anyone.
+	reply_to = frappe.db.get_value("Customer", cust, "account_manager")
+	if not reply_to:
+		owner = claim.owner if claim.owner not in ("Administrator", "Guest") else None
+		reply_to = owner or claim.modified_by
+	if not reply_to or "@" not in str(reply_to):
+		reply_to = None
+
+	subject = f"Re: Claim {claim.name}"
+	sender = frappe.session.user
+	sender_name = frappe.db.get_value("User", sender, "full_name") or sender
+
+	comm = frappe.get_doc({
+		"doctype": "Communication",
+		"communication_type": "Communication",
+		"communication_medium": "Email",
+		"sent_or_received": "Sent",
+		"subject": subject,
+		"content": content,
+		"sender": sender,
+		"sender_full_name": sender_name,
+		"recipients": reply_to or "",
+		"reference_doctype": "Customer Feedback",
+		"reference_name": claim.name,
+	})
+	comm.insert(ignore_permissions=True)
+
+	status = "recorded"
+	if reply_to:
+		try:
+			frappe.sendmail(
+				recipients=[r.strip() for r in str(reply_to).split(",") if r.strip()],
+				sender=sender,
+				subject=subject,
+				message=content,
+				communication=comm.name,
+			)
+			status = "sent"
+		except Exception as e:
+			status = f"queued (mail not configured: {e})"
+
+	frappe.db.commit()
+	return {"name": comm.name, "status": status, "recipients": reply_to or None}
 
 
 # ── Submissions ──────────────────────────────────────────────────────────────
