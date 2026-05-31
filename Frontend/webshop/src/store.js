@@ -39,9 +39,15 @@ export const useStore = create((set, get) => ({
   loadingCart: false,
   cartError: null,
 
+  // Reorder: recent orders + saved quick-buy profiles
+  recentOrders: null,  // [{name, transaction_date, status, item_count, items[], ...}]
+  profiles: null,      // [{name, profile_name, notes, last_used, item_count, items[]}]
+  loadingReorder: false,
+
   // UI
   detail: null,        // {item, loading, err}
   cartOpen: false,
+  reorderOpen: false,
   view: 'catalog',     // catalog | confirmation
   confirmation: null,  // {name, status}
 
@@ -49,6 +55,13 @@ export const useStore = create((set, get) => ({
   setView(v) { set({ view: v }); },
   openCart() { set({ cartOpen: true }); get().loadCart(); },
   closeCart() { set({ cartOpen: false }); },
+
+  openReorder() {
+    set({ reorderOpen: true });
+    get().loadRecentOrders();
+    get().loadProfiles();
+  },
+  closeReorder() { set({ reorderOpen: false }); },
 
   setToast(t) { set({ toast: t }); if (t) setTimeout(() => set({ toast: null }), 4500); },
   clearToast() { set({ toast: null }); },
@@ -224,6 +237,82 @@ export const useStore = create((set, get) => ({
     } catch (e) {
       get().setToast({ kind: 'err', message: e.message });
       throw e;
+    }
+  },
+
+  // ── Reorder: recent orders + saved profiles ──────────────
+  async loadRecentOrders() {
+    if (!get().ctx?.customer && !get().impersonate) { set({ recentOrders: [] }); return; }
+    set({ loadingReorder: true });
+    try {
+      const r = await api('customer_portal.api.webshop.list_recent_orders', get()._args({ limit: 6 }));
+      set({ recentOrders: r || [], loadingReorder: false });
+    } catch (e) { set({ recentOrders: [], loadingReorder: false }); }
+  },
+
+  async loadProfiles() {
+    if (!get().ctx?.customer && !get().impersonate) { set({ profiles: [] }); return; }
+    try {
+      const r = await api('customer_portal.api.webshop.list_reorder_profiles', get()._args());
+      set({ profiles: r || [] });
+    } catch (e) { set({ profiles: [] }); }
+  },
+
+  // Apply a reorder/load response: refresh cart, surface what was added/skipped,
+  // and swing the user over to the cart so they can review and submit.
+  _applyReorderResult(cart) {
+    set({ cart, reorderOpen: false, cartOpen: true });
+    const meta = cart?.reordered;
+    if (meta) {
+      const msg = meta.skipped?.length
+        ? `Added ${meta.added} item${meta.added === 1 ? '' : 's'}; ${meta.skipped.length} no longer available`
+        : `Added ${meta.added} item${meta.added === 1 ? '' : 's'} to cart`;
+      get().setToast({ kind: meta.skipped?.length ? 'info' : 'ok', message: msg });
+    }
+  },
+
+  async saveProfile(profileName, notes = '') {
+    if (!get()._requireCustomer()) return null;
+    try {
+      const r = await api('customer_portal.api.webshop.save_reorder_profile',
+        get()._args({ profile_name: profileName, notes }));
+      get().setToast({ kind: 'ok', message: `Saved “${r.profile_name}” (${r.item_count} item${r.item_count === 1 ? '' : 's'})` });
+      get().loadProfiles();
+      return r;
+    } catch (e) {
+      get().setToast({ kind: 'err', message: e.message });
+      throw e;
+    }
+  },
+
+  async loadProfile(name, replace = 0) {
+    if (!get()._requireCustomer()) return;
+    try {
+      const cart = await api('customer_portal.api.webshop.load_reorder_profile',
+        get()._args({ name, replace }));
+      get()._applyReorderResult(cart);
+    } catch (e) {
+      get().setToast({ kind: 'err', message: e.message });
+    }
+  },
+
+  async deleteProfile(name) {
+    try {
+      await api('customer_portal.api.webshop.delete_reorder_profile', get()._args({ name }));
+      set({ profiles: (get().profiles || []).filter((p) => p.name !== name) });
+    } catch (e) {
+      get().setToast({ kind: 'err', message: e.message });
+    }
+  },
+
+  async reorderFromOrder(name, replace = 0) {
+    if (!get()._requireCustomer()) return;
+    try {
+      const cart = await api('customer_portal.api.webshop.reorder_to_cart',
+        get()._args({ source_doctype: 'Sales Order', source_name: name, replace }));
+      get()._applyReorderResult(cart);
+    } catch (e) {
+      get().setToast({ kind: 'err', message: e.message });
     }
   },
 }));

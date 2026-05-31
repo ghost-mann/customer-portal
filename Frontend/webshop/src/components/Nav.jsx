@@ -5,8 +5,9 @@ import Logo from '@shared/Logo';
 import ImpersonatePicker from '@shared/ImpersonatePicker';
 
 export default function Nav() {
-  const { ctx, filters, setFilter, cart, openCart, impersonate, setImpersonate } = useStore();
+  const { ctx, filters, setFilter, cart, openCart, openReorder, impersonate, setImpersonate } = useStore();
   const itemCount = cart?.item_count || 0;
+  const hasCustomer = !!ctx?.customer || !!impersonate;
 
   return (
     <nav className="nav">
@@ -42,6 +43,12 @@ export default function Nav() {
           <Icon name="person" />
           <span>My account</span>
         </a>
+        {hasCustomer && (
+          <button className="nav-link" onClick={openReorder} title="Reorder from past orders or saved profiles">
+            <Icon name="replay" />
+            <span>Quick buy</span>
+          </button>
+        )}
         <button className="cart-btn" onClick={openCart}>
           <Icon name="shopping_bag" />
           Cart

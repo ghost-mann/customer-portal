@@ -4,9 +4,12 @@ import Icon from '@shared/Icon';
 import { fmtMoney, fmt } from '@shared/utils';
 
 export default function CartDrawer() {
-  const { cartOpen, cart, loadingCart, cartError, closeCart, updateQty, removeItem, submitQuotation } = useStore();
+  const { cartOpen, cart, loadingCart, cartError, closeCart, updateQty, removeItem, submitQuotation, saveProfile } = useStore();
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileName, setProfileName] = useState('');
+  const [savePromptOpen, setSavePromptOpen] = useState(false);
 
   if (!cartOpen) return null;
 
@@ -16,6 +19,17 @@ export default function CartDrawer() {
       await submitQuotation(notes);
     } catch (e) {} // error already in store
     finally { setSubmitting(false); }
+  }
+
+  async function doSaveProfile() {
+    if (!profileName.trim()) return;
+    setSavingProfile(true);
+    try {
+      await saveProfile(profileName.trim());
+      setProfileName('');
+      setSavePromptOpen(false);
+    } catch (e) {} // toast handled in store
+    finally { setSavingProfile(false); }
   }
 
   const items = cart?.items || [];
@@ -112,7 +126,31 @@ export default function CartDrawer() {
                 />
               </div>
 
-              <div style={{ marginTop: 18, display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              {/* Save the current cart as a reusable quick-buy profile */}
+              <div style={{ marginTop: 16 }}>
+                {!savePromptOpen ? (
+                  <button className="btn btn-secondary" style={{ width: '100%' }} onClick={() => setSavePromptOpen(true)}>
+                    <Icon name="bookmark_add" />Save as quick-buy profile
+                  </button>
+                ) : (
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      className="cart-input"
+                      autoFocus
+                      style={{ flex: 1, padding: '9px 12px', border: '1px solid var(--border)', borderRadius: 8, fontFamily: 'var(--f)', fontSize: 13.5, background: 'var(--surface)' }}
+                      placeholder="Profile name, e.g. Weekly mix"
+                      value={profileName}
+                      onChange={(e) => setProfileName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') doSaveProfile(); }}
+                    />
+                    <button className="btn btn-primary" onClick={doSaveProfile} disabled={savingProfile || !profileName.trim()}>
+                      <Icon name="bookmark" />{savingProfile ? 'Saving…' : 'Save'}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ marginTop: 14, display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
                 <button className="btn btn-secondary" onClick={closeCart} disabled={submitting}>
                   Keep browsing
                 </button>

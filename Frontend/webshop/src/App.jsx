@@ -4,6 +4,7 @@ import Nav from './components/Nav';
 import Sidebar from './components/Sidebar';
 import ItemDrawer from './components/ItemDrawer';
 import CartDrawer from './components/CartDrawer';
+import ReorderDrawer from './components/ReorderDrawer';
 import Catalog from './pages/Catalog';
 import Confirmation from './pages/Confirmation';
 import Icon from '@shared/Icon';
@@ -11,7 +12,7 @@ import Toast from './components/Toast';
 import { fmt } from '@shared/utils';
 
 export default function App() {
-  const { bootstrap, loadingCtx, ctxError, ctx, view, filters, items, detail, cartOpen } = useStore();
+  const { bootstrap, loadingCtx, ctxError, ctx, view, filters, items, detail, cartOpen, reorderOpen } = useStore();
 
   useEffect(() => { bootstrap(); }, []);
 
@@ -112,6 +113,7 @@ export default function App() {
       </div>
       {detail && <ItemDrawer />}
       {cartOpen && <CartDrawer />}
+      {reorderOpen && <ReorderDrawer />}
       <Toast />
     </>
   );

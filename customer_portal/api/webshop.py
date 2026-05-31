@@ -485,3 +485,198 @@ def submit_quotation(notes: str | None = None, customer: str | None = None) -> d
 		frappe.throw(_("Could not submit your request: {0}").format(str(e)))
 
 	return {"name": q.name, "status": "Submitted"}
+
+
+# ── Reorder: recent orders + saved profiles ──────────────────────────────────
+#
+# Flower buying is highly repetitive, so the shop lets a customer (a) reorder
+# straight from a past order and (b) save the current cart as a named "quick-buy
+# profile" they can drop back into the cart in one click.
+
+def _sellable(item_code: str) -> bool:
+	"""True if the item still exists and is sellable — guards reorder against
+	items that were since disabled or deleted."""
+	row = frappe.db.get_value("Item", item_code, ["disabled", "is_sales_item"], as_dict=True)
+	return bool(row) and not row.disabled and row.is_sales_item
+
+
+def _add_items_to_cart(cust: str, rows: list, replace: bool = False) -> tuple[dict, list]:
+	"""Merge (item_code, qty, uom) rows into the customer's draft-Quotation cart.
+	Skips items that are no longer sellable. Returns (cart_dict, skipped_codes)."""
+	norm, skipped = [], []
+	for it in rows:
+		code = (it.get("item_code") or "").strip()
+		if not code:
+			continue
+		if not _sellable(code):
+			skipped.append(code)
+			continue
+		try:
+			qty = float(it.get("qty") or 0)
+		except Exception:
+			qty = 0
+		norm.append((code, qty if qty > 0 else 1, it.get("uom")))
+
+	if not norm:
+		return get_cart(cust), skipped
+
+	qname = _open_draft_quotation(cust)
+	if qname is None:
+		q = _new_draft_quotation(cust)
+		pl = q.selling_price_list or _price_list(cust)
+		for code, qty, uom in norm:
+			q.append("items", _row_for(code, qty, uom, pl))
+		q.flags.ignore_mandatory = True
+		q.insert(ignore_permissions=True)
+		frappe.db.commit()
+		return _format_cart_doc(q.name), skipped
+
+	def _merge(q):
+		pl = q.selling_price_list or _price_list(cust)
+		if replace:
+			q.items = []
+		existing = {r.item_code: r for r in (q.items or [])}
+		for code, qty, uom in norm:
+			if code in existing:
+				existing[code].qty = float(existing[code].qty or 0) + qty
+			else:
+				q.append("items", _row_for(code, qty, uom, pl))
+				existing[code] = q.items[-1]
+
+	_mutate_quotation(qname, _merge)
+	frappe.db.commit()
+	return _format_cart_doc(qname), skipped
+
+
+@frappe.whitelist()
+def list_recent_orders(customer: str | None = None, limit: int = 6) -> list:
+	"""Recent Sales Orders for this customer, each with a short item preview, so
+	the shop can offer one-click reordering."""
+	cust = _resolve_customer(customer)
+	orders = frappe.get_all(
+		"Sales Order",
+		filters={"customer": cust, "docstatus": ["!=", 2]},
+		fields=["name", "transaction_date", "status", "grand_total", "currency", "total_qty"],
+		order_by="transaction_date desc, creation desc",
+		limit_page_length=int(limit),
+	) or []
+	for o in orders:
+		items = frappe.get_all(
+			"Sales Order Item",
+			filters={"parent": o["name"]},
+			fields=["item_code", "item_name", "qty", "uom"],
+			order_by="idx",
+		) or []
+		o["item_count"] = len(items)
+		o["items"] = items
+	return orders
+
+
+@frappe.whitelist()
+def reorder_to_cart(source_doctype: str, source_name: str, replace: int | str = 0,
+                    customer: str | None = None) -> dict:
+	"""Copy the line items of a past Sales Order / Quotation into the cart."""
+	cust = _resolve_customer(customer)
+	if source_doctype not in ("Sales Order", "Quotation"):
+		frappe.throw(_("Cannot reorder from {0}.").format(source_doctype))
+
+	doc = frappe.get_doc(source_doctype, source_name)
+	owner = doc.customer if source_doctype == "Sales Order" else doc.party_name
+	if owner != cust and not _is_staff():
+		frappe.throw(_("That order doesn't belong to your account."), frappe.PermissionError)
+
+	rows = [{"item_code": r.item_code, "qty": r.qty, "uom": r.uom} for r in (doc.items or [])]
+	cart, skipped = _add_items_to_cart(cust, rows, replace=str(replace) not in ("0", "", "false", "False"))
+	cart["reordered"] = {"added": len(rows) - len(skipped), "skipped": skipped}
+	return cart
+
+
+# ── Saved quick-buy profiles ──────────────────────────────────────────────────
+
+def _profile_items(name: str) -> list:
+	return frappe.get_all(
+		"Reorder Profile Item",
+		filters={"parent": name, "parenttype": "Reorder Profile"},
+		fields=["item_code", "item_name", "qty", "uom"],
+		order_by="idx",
+	) or []
+
+
+@frappe.whitelist()
+def list_reorder_profiles(customer: str | None = None) -> list:
+	"""The customer's saved quick-buy profiles, most-recently-used first."""
+	cust = _resolve_customer(customer)
+	profs = frappe.get_all(
+		"Reorder Profile",
+		filters={"customer": cust},
+		fields=["name", "profile_name", "notes", "last_used", "modified"],
+		order_by="last_used desc, modified desc",
+	) or []
+	for p in profs:
+		p["items"] = _profile_items(p["name"])
+		p["item_count"] = len(p["items"])
+	return profs
+
+
+@frappe.whitelist()
+def save_reorder_profile(profile_name: str, notes: str = "", customer: str | None = None) -> dict:
+	"""Snapshot the current cart as a named quick-buy profile."""
+	cust = _resolve_customer(customer)
+	profile_name = (profile_name or "").strip()
+	if not profile_name:
+		frappe.throw(_("Give your profile a name."))
+
+	cart = get_cart(cust)
+	items = cart.get("items") or []
+	if not items:
+		frappe.throw(_("Your cart is empty — add items before saving a profile."))
+
+	doc = frappe.new_doc("Reorder Profile")
+	doc.profile_name = profile_name
+	doc.customer = cust
+	doc.notes = notes or ""
+	doc.last_used = frappe.utils.now_datetime()
+	for it in items:
+		doc.append("items", {
+			"item_code": it["item_code"],
+			"item_name": it.get("item_name") or it["item_code"],
+			"qty": it.get("qty") or 1,
+			"uom": it.get("uom"),
+		})
+	doc.insert(ignore_permissions=True)
+	frappe.db.commit()
+	return {"name": doc.name, "profile_name": doc.profile_name, "item_count": len(items)}
+
+
+@frappe.whitelist()
+def load_reorder_profile(name: str, replace: int | str = 0, customer: str | None = None) -> dict:
+	"""Drop a saved profile's items into the cart (merging by default)."""
+	cust = _resolve_customer(customer)
+	doc = frappe.get_doc("Reorder Profile", name)
+	if doc.customer != cust and not _is_staff():
+		frappe.throw(_("That profile doesn't belong to your account."), frappe.PermissionError)
+
+	rows = [{"item_code": r.item_code, "qty": r.qty, "uom": r.uom} for r in (doc.items or [])]
+	cart, skipped = _add_items_to_cart(cust, rows, replace=str(replace) not in ("0", "", "false", "False"))
+
+	# Touch last_used so the profile floats to the top of the list next time.
+	try:
+		doc.db_set("last_used", frappe.utils.now_datetime(), update_modified=False)
+		frappe.db.commit()
+	except Exception:
+		pass
+
+	cart["reordered"] = {"added": len(rows) - len(skipped), "skipped": skipped}
+	return cart
+
+
+@frappe.whitelist()
+def delete_reorder_profile(name: str, customer: str | None = None) -> dict:
+	"""Delete one of the customer's saved profiles."""
+	cust = _resolve_customer(customer)
+	doc = frappe.get_doc("Reorder Profile", name)
+	if doc.customer != cust and not _is_staff():
+		frappe.throw(_("That profile doesn't belong to your account."), frappe.PermissionError)
+	frappe.delete_doc("Reorder Profile", name, ignore_permissions=True)
+	frappe.db.commit()
+	return {"deleted": name}
