@@ -5,7 +5,7 @@ import Sidebar from './components/Sidebar';
 import Icon from '@shared/Icon';
 
 import Overview from './pages/Overview';
-import PickCustomer from './pages/PickCustomer';
+import MyAccounts from './pages/MyAccounts';
 import Orders from './pages/Orders';
 import Shipments from './pages/Shipments';
 import Claims from './pages/Claims';
@@ -70,13 +70,13 @@ export default function App() {
     );
   }
 
-  // Staff with no customer picked yet — short-circuit to the picker
+  // Rep/staff with no account selected yet — show their portfolio.
   if (ctx?.needs_impersonation) {
     return (
       <>
         <Nav ctx={ctx} />
         <div style={{ height: 'calc(100vh - 56px)', background: 'var(--bg)', overflowY: 'auto' }}>
-          <PickCustomer />
+          <MyAccounts />
         </div>
       </>
     );
@@ -84,12 +84,14 @@ export default function App() {
 
   const meta = PAGE_META[page] || PAGE_META.overview;
   const Page = PAGES[page] || Overview;
-  const impersonating = ctx?.is_staff && useStore.getState().impersonate;
+  const { impersonate, setImpersonate } = useStore.getState();
+  // Viewing an account other than the user's own contact link.
+  const viewingAccount = (ctx?.is_staff || ctx?.is_account_manager) && impersonate;
 
   return (
     <>
       <Nav ctx={ctx} />
-      {impersonating && (
+      {viewingAccount && (
         <div style={{
           background: 'var(--accent-soft)',
           borderBottom: '1px solid #cfdbd1',
@@ -103,11 +105,23 @@ export default function App() {
           alignItems: 'center',
           gap: 8,
         }}>
-          <Icon name="visibility" style={{ fontSize: 14 }} />
-          Staff impersonation — you are viewing this portal as customer <strong style={{ marginLeft: 4 }}>{ctx.customer_name} ({ctx.customer})</strong>
+          <button
+            onClick={() => setImpersonate(null)}
+            title="Back to My Accounts"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              background: 'transparent', border: '1px solid #cfdbd1', borderRadius: 6,
+              color: 'var(--accent-2)', cursor: 'pointer', padding: '3px 9px',
+              fontFamily: 'var(--mono)', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.1em',
+            }}
+          >
+            <Icon name="arrow_back" style={{ fontSize: 13 }} /> My Accounts
+          </button>
+          <Icon name="visibility" style={{ fontSize: 14, marginLeft: 4 }} />
+          Viewing account <strong style={{ marginLeft: 4 }}>{ctx.customer_name} ({ctx.customer})</strong>
         </div>
       )}
-      <div className="app" style={{ height: impersonating ? 'calc(100vh - 56px - 32px)' : 'calc(100vh - 56px)' }}>
+      <div className="app" style={{ height: viewingAccount ? 'calc(100vh - 56px - 32px)' : 'calc(100vh - 56px)' }}>
         <Sidebar />
         <main className="main">
           <div className="main-hd">

@@ -20,7 +20,26 @@ from frappe import _
 STAFF_ROLES = {"System Manager", "Sales Manager", "Sales User", "CRM Manager", "CRM User"}
 
 def _is_staff() -> bool:
+	"""Broad staff — may view/impersonate ANY customer."""
 	return bool(set(frappe.get_roles(frappe.session.user)) & STAFF_ROLES)
+
+
+def _is_account_manager() -> bool:
+	"""True if the current user is the `account_manager` on at least one Customer.
+	Such users get a "My Accounts" portfolio scoped to the accounts they manage,
+	even if they don't hold a broad staff role."""
+	return bool(frappe.db.exists("Customer", {"account_manager": frappe.session.user}))
+
+
+def _manages(customer: str) -> bool:
+	"""True if the current user is the account_manager of this specific customer."""
+	return frappe.db.get_value("Customer", customer, "account_manager") == frappe.session.user
+
+
+def _can_select_accounts() -> bool:
+	"""True if the user may view accounts beyond their own contact link —
+	broad staff, or an account manager with a portfolio."""
+	return _is_staff() or _is_account_manager()
 
 
 @frappe.whitelist()
@@ -55,16 +74,95 @@ def list_customers(search: str = "", limit: int = 30) -> list:
 	) or []
 
 
+@frappe.whitelist()
+def list_my_accounts(search: str = "", limit: int = 200) -> list:
+	"""The account manager's portfolio: customers where they are the
+	`account_manager`, each enriched with at-a-glance stats. With a search term,
+	broad staff search ALL customers (so they can reach any account); account
+	managers filter within their own portfolio.
+
+	Returns [] for users who are neither staff nor account managers."""
+	user = frappe.session.user
+	if user == "Guest":
+		return []
+	if not _can_select_accounts():
+		return []
+
+	s = f"%{search}%" if search else None
+	or_filters = [["name", "like", s], ["customer_name", "like", s]] if s else None
+
+	# Scope: staff searching → all customers; otherwise the user's own portfolio.
+	if search and _is_staff():
+		filters = {"disabled": 0}
+	else:
+		filters = {"disabled": 0, "account_manager": user}
+
+	custs = frappe.get_all(
+		"Customer",
+		filters=filters,
+		or_filters=or_filters,
+		fields=["name", "customer_name", "customer_group", "territory", "customer_type"],
+		order_by="customer_name asc",
+		limit_page_length=int(limit),
+	) or []
+	if not custs:
+		return []
+
+	names = [c["name"] for c in custs]
+
+	def _grouped_count(doctype: str, extra_filters: dict) -> dict:
+		"""customer → row count, in one grouped query."""
+		rows = frappe.get_all(
+			doctype,
+			filters={"customer": ["in", names], **extra_filters},
+			fields=["customer", "count(name) as cnt"],
+			group_by="customer",
+		) or []
+		return {r["customer"]: r["cnt"] for r in rows}
+
+	open_orders = _grouped_count("Sales Order", {
+		"docstatus": 1,
+		"status": ["not in", ["Closed", "Completed", "Cancelled"]],
+	})
+	overdue_inv = _grouped_count("Sales Invoice", {
+		"docstatus": 1,
+		"status": ["in", ["Overdue", "Unpaid"]],
+	})
+
+	# Last activity = most recent Sales Order date per customer
+	last_rows = frappe.get_all(
+		"Sales Order",
+		filters={"customer": ["in", names], "docstatus": ["!=", 2]},
+		fields=["customer", "max(transaction_date) as last_date"],
+		group_by="customer",
+	) or []
+	last_activity = {r["customer"]: r["last_date"] for r in last_rows}
+
+	for c in custs:
+		n = c["name"]
+		c["open_orders"]      = open_orders.get(n, 0)
+		c["overdue_invoices"] = overdue_inv.get(n, 0)
+		c["last_activity"]    = last_activity.get(n)
+	return custs
+
+
 def _resolve_customer(impersonate: str | None = None, allow_staff_unset: bool = False) -> str | None:
-	"""Return the Customer name linked to the current user. Staff may impersonate
-	by passing a customer name. Raises PermissionError if a real customer-contact
-	has no link. For staff with no impersonate set, returns None when
-	allow_staff_unset=True so the caller can render a picker."""
+	"""Return the Customer name to scope data to.
+
+	Resolution order:
+	  1. An explicit `impersonate` customer, when the user is allowed to view it —
+	     broad staff may view any customer; an account manager may view accounts
+	     they manage.
+	  2. The Customer linked to the user's Contact (a real customer-contact).
+	  3. For users who can select accounts but have no own link, returns None when
+	     `allow_staff_unset=True` so the caller can render the account picker;
+	     otherwise raises PermissionError.
+	"""
 	user = frappe.session.user
 	if user == "Guest":
 		frappe.throw(_("Please sign in to access the customer portal."), frappe.PermissionError)
 
-	if impersonate and _is_staff():
+	if impersonate and (_is_staff() or _manages(impersonate)):
 		if not frappe.db.exists("Customer", impersonate):
 			frappe.throw(_("Customer {0} not found.").format(impersonate))
 		return impersonate
@@ -80,12 +178,12 @@ def _resolve_customer(impersonate: str | None = None, allow_staff_unset: bool = 
 		if row:
 			return row
 
-	# Staff: explicit "needs to pick one" state — callers handle it.
-	if _is_staff():
+	# Staff / account managers: explicit "needs to pick an account" state.
+	if _can_select_accounts():
 		if allow_staff_unset:
 			return None
 		frappe.throw(
-			_("Pick a customer from the impersonation menu in the top-right to view the portal."),
+			_("Pick an account from My Accounts to view the portal."),
 			frappe.PermissionError,
 		)
 
@@ -102,14 +200,32 @@ def get_my_context(customer: str | None = None) -> dict:
 	"""Identity + company + manager + currency. Called once on app boot.
 	For staff with no customer selected, returns a stub asking them to pick one."""
 	user = frappe.session.user
-	cust = _resolve_customer(customer, allow_staff_unset=True)
 
-	if cust is None:
-		# Staff has not picked a customer to impersonate yet
+	# Reps/staff land on My Accounts by default — even if they also happen to be
+	# a customer-contact — and only enter an account once they explicitly select
+	# one (which arrives as the `customer` arg). Pure customer-contacts skip this
+	# and resolve straight to their own linked customer below.
+	if not customer and _can_select_accounts():
 		return {
 			"user": user,
 			"full_name": frappe.db.get_value("User", user, "full_name") or user,
-			"is_staff": True,
+			"is_staff": _is_staff(),
+			"is_account_manager": _is_account_manager(),
+			"can_search_all": _is_staff(),
+			"needs_impersonation": True,
+			"customer": None,
+		}
+
+	cust = _resolve_customer(customer, allow_staff_unset=True)
+
+	if cust is None:
+		# Selector with no account chosen (defensive — handled above).
+		return {
+			"user": user,
+			"full_name": frappe.db.get_value("User", user, "full_name") or user,
+			"is_staff": _is_staff(),
+			"is_account_manager": _is_account_manager(),
+			"can_search_all": _is_staff(),
 			"needs_impersonation": True,
 			"customer": None,
 		}
@@ -155,6 +271,11 @@ def get_my_context(customer: str | None = None) -> dict:
 		"currency": default_currency,
 		"payment_terms": pt,
 		"is_staff": _is_staff(),
+		"is_account_manager": _is_account_manager(),
+		"can_search_all": _is_staff(),
+		# True when the user is viewing an account other than their own contact
+		# link — i.e. a rep/staff member who selected this account.
+		"impersonating": bool(customer) and _can_select_accounts(),
 	}
 
 
