@@ -1,11 +1,17 @@
 import tailwindcssAnimate from 'tailwindcss-animate';
 
 /** @type {import('tailwindcss').Config} */
-// Scoped to the crm section only — `content` never globs the other four sections,
-// so no utility classes or preflight leak into portal/site/webshop/customer-panel.
+// The CRM section (the only Tailwind consumer) has moved to the standalone
+// upande_crm app. No remaining section uses @tailwind directives, so this is a
+// no-op kept only so the shared postcss pipeline stays valid for the four pages.
 export default {
   darkMode: ['class'],
-  content: ['./crm/index.html', './crm/src/**/*.{js,jsx}'],
+  content: [
+    './portal/**/*.{js,jsx,html}',
+    './site/**/*.{js,jsx,html}',
+    './webshop/**/*.{js,jsx,html}',
+    './customer-panel/**/*.{js,jsx,html}',
+  ],
   theme: {
     extend: {
       fontFamily: {

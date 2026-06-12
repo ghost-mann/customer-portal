@@ -22,7 +22,7 @@ CUSTOMER_PANEL_ROLES = {"System Manager", "Customer"}
 
 # Routes — change here if any of the destination apps move.
 ROUTE_CUSTOMER = "/customer-portal"
-ROUTE_CRM      = "/crm"
+ROUTE_CRM      = "/customer-relationship-management"
 ROUTE_WEBSHOP  = "/website-shop"
 
 

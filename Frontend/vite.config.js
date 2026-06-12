@@ -11,7 +11,7 @@ import proxyOptions from './proxyOptions.js';
 // assets/ dir, served by Frappe at /assets/customer_portal/frontend/. The four
 // existing routes (/, /portal, /website-shop, /customer-portal) are preserved
 // by scripts/build-html.mjs, which writes the four www templates.
-const AREAS = ['portal', 'site', 'webshop', 'customer-panel', 'crm'];
+const AREAS = ['portal', 'site', 'webshop', 'customer-panel'];
 
 export default defineConfig({
   plugins: [react()],
@@ -19,8 +19,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@shared': path.resolve(__dirname, 'shared'),
-      // shadcn convention, used only by the crm section
-      '@': path.resolve(__dirname, 'crm/src'),
     },
   },
   build: {
