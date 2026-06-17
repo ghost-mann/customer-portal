@@ -27,7 +27,7 @@ export default function Catalog() {
                 padding: '5px 10px 5px 12px', borderRadius: 999,
                 background: 'var(--accent-soft)', color: 'var(--accent-2)',
                 fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 500,
-                border: '1px solid #cfdbd1',
+                border: '1px solid #c9d5e6',
               }}
             >
               {f.label}

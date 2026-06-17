@@ -63,7 +63,7 @@ export function initials(s) {
 }
 
 export function avatarBg(s) {
-  const palette = ['#3a5a48', '#c87a5a', '#c89e3a', '#7a9b6e', '#4a8a8a', '#5e7ba8', '#8a5a7a', '#7a1f2b'];
+  const palette = ['#1e3a64', '#c87a5a', '#c89e3a', '#7a9b6e', '#4a8a8a', '#5e7ba8', '#8a5a7a', '#7a1f2b'];
   let h = 0;
   for (const ch of (s || '')) h = ((h << 5) - h + ch.charCodeAt(0)) | 0;
   return palette[Math.abs(h) % palette.length];

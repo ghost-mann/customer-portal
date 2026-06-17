@@ -237,7 +237,7 @@ button{font-family:inherit;}
 }
 .fc:focus{
   outline:none;border-color:var(--accent);
-  box-shadow:0 0 0 3px rgba(58,90,72,0.10);
+  box-shadow:0 0 0 3px rgba(30,58,100,0.12);
 }
 .fc::placeholder{color:var(--text-3);}
 textarea.fc{resize:vertical;min-height:80px;line-height:1.55;font-family:var(--f);}
