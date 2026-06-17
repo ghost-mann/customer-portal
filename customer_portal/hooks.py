@@ -14,6 +14,16 @@ website_route_rules = [
 	{"from_route": "/contact",   "to_route": "home"},
 ]
 
+# When a credit note (Sales Invoice with is_return=1) is submitted/cancelled,
+# link/unlink it on the claim (Customer Feedback) raised against the original
+# invoice. Keeps the invoice → claim → credit note chain wired automatically.
+doc_events = {
+	"Sales Invoice": {
+		"on_submit": "customer_portal.api.credit_note.link_credit_note_to_claim",
+		"on_cancel": "customer_portal.api.credit_note.unlink_credit_note_from_claim",
+	},
+}
+
 # Apps
 # ------------------
 
