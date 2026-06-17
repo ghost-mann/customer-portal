@@ -8,8 +8,8 @@ export default function Footer({ content, navigate }) {
       <div className="foot-inner">
         <div>
           <div className="foot-brand">
-            <div className="brand-mark">AF</div>
-            <span className="brand-text">{c.brand?.name || 'Customer Portal'}</span>
+            <div className="brand-mark">MF</div>
+            <span className="brand-text">{c.brand?.name || 'Mona Flowers'}</span>
           </div>
           <p className="foot-tag">{c.brand?.tagline || 'Farm-direct, every season.'}</p>
         </div>

@@ -322,23 +322,19 @@ def get_overview(customer: str | None = None) -> dict:
 		"status": ["in", ["Overdue", "Unpaid"]],
 	})
 
-	# Open claims
+	# Open claims — key on the `customer` Link field first (holds the Customer id),
+	# falling back to the display-name fields only if `customer` doesn't exist.
 	open_claims = 0
 	if frappe.db.exists("DocType", "Customer Feedback"):
-		try:
-			open_claims = count("Customer Feedback", {
-				"customer_company": cust,
-				"status": ["not in", ["Resolved", "Closed", "Rejected"]],
-			})
-		except Exception:
-			# Field may be customer_name instead of customer_company on some sites
+		for fld in ("customer", "customer_name", "customer_company"):
 			try:
 				open_claims = count("Customer Feedback", {
-					"customer_name": cust,
+					fld: cust,
 					"status": ["not in", ["Resolved", "Closed", "Rejected"]],
 				})
+				break
 			except Exception:
-				open_claims = 0
+				continue
 
 	# Recent orders (last 5)
 	recent_orders = frappe.get_all(
@@ -428,16 +424,18 @@ def list_claims(customer: str | None = None, limit: int = 100) -> list:
 	if not frappe.db.exists("DocType", "Customer Feedback"):
 		return []
 
-	# Try both possible link field names — Customer Feedback may use either.
+	# Scope to this customer. `customer` is the authoritative Link field (it holds
+	# the Customer id, e.g. CUS00064) — try it first. `customer_company` /
+	# `customer_name` hold the display name on some sites and are only fallbacks.
 	rows = []
-	for fld in ("customer_company", "customer_name", "customer"):
+	for fld in ("customer", "customer_name", "customer_company"):
 		try:
 			rows = frappe.get_all(
 				"Customer Feedback",
 				filters={fld: cust},
 				fields=[
 					"name", "feedback_date", "feedback_type", "status",
-					"invoice_number", "consignment_number",
+					"invoice_number", "sales_invoice", "consignment_number",
 					"claim_type", "total_stems_claimed", "total_claim_cost",
 				],
 				order_by="feedback_date desc, creation desc",
@@ -493,13 +491,15 @@ def get_doc(doctype_kind: str, name: str, customer: str | None = None) -> dict:
 	# Defense in depth: only return docs that belong to the current customer
 	if dt in ("Sales Order", "Delivery Note", "Sales Invoice") and doc.customer != cust:
 		frappe.throw(_("Not your document."), frappe.PermissionError)
-	if dt == "Customer Feedback":
-		owner = (
-			getattr(doc, "customer_company", None)
-			or getattr(doc, "customer_name", None)
-			or getattr(doc, "customer", None)
+	if dt == "Customer Feedback" and not _is_staff():
+		# `customer` (Link) is the authoritative isolation key; accept a match there
+		# first, then fall back to the display-name fields for legacy records.
+		owns = (
+			getattr(doc, "customer", None) == cust
+			or getattr(doc, "customer_company", None) == cust
+			or getattr(doc, "customer_name", None) == cust
 		)
-		if owner and owner != cust and not _is_staff():
+		if not owns:
 			frappe.throw(_("Not your document."), frappe.PermissionError)
 	if dt == "Communication":
 		if doc.reference_doctype != "Customer" or doc.reference_name != cust:
@@ -778,6 +778,27 @@ def submit_claim(payload=None, **kwargs) -> dict:
 	if hasattr(doc, "contact_email"): doc.contact_email = data.get("contact_email") or frappe.session.user
 	if hasattr(doc, "contact_phone"): doc.contact_phone = data.get("contact_phone") or ""
 
+	# Sales Invoice is the primary reference a claim is raised against — credit
+	# notes and resolution hang off it. Store it as a validated Link and mirror it
+	# into the text invoice_number field for display / legacy filters. Prefill the
+	# commercial fields from the invoice where the customer left them blank.
+	inv = data.get("sales_invoice")
+	if inv:
+		owner = frappe.db.get_value("Sales Invoice", inv, "customer")
+		if not owner:
+			frappe.throw(_("Invoice {0} was not found.").format(inv))
+		if owner != cust and not _is_staff():
+			frappe.throw(_("That invoice doesn't belong to your account."), frappe.PermissionError)
+		if hasattr(doc, "sales_invoice"):
+			doc.sales_invoice = inv
+		if not data.get("invoice_number"):
+			data["invoice_number"] = inv
+		si = frappe.db.get_value("Sales Invoice", inv, ["po_no", "currency"], as_dict=True) or {}
+		if si.get("po_no") and not data.get("po_number"):
+			data["po_number"] = si.po_no
+		if si.get("currency") and not data.get("currency"):
+			data["currency"] = si.currency
+
 	for fld in ("invoice_number", "consignment_number", "po_number", "shipment_date",
 	            "control_point", "claim_type", "currency",
 	            "total_stems_claimed", "total_claim_cost", "additional_description"):
@@ -837,10 +858,15 @@ def submit_suggestion(payload=None, **kwargs) -> dict:
 	doc.feedback_type = kind
 	doc.status        = "Submitted"
 
+	# Display-name field (name varies by site) + the authoritative Customer link,
+	# so the suggestion is scoped to this customer just like a claim.
 	for fld in ("customer_company", "customer_name", "customer"):
 		if hasattr(doc, fld):
 			setattr(doc, fld, c.customer_name)
 			break
+	if hasattr(doc, "customer"):
+		try: doc.customer = cust
+		except Exception: pass
 
 	if hasattr(doc, "contact_name"):  doc.contact_name  = data.get("contact_name") or frappe.session.user
 	if hasattr(doc, "contact_email"): doc.contact_email = data.get("contact_email") or frappe.session.user

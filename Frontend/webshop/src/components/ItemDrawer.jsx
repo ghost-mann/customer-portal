@@ -6,27 +6,42 @@ import { fmtMoney } from '@shared/utils';
 export default function ItemDrawer() {
   const { detail, closeDetail, addToCart, openCart } = useStore();
   const [qty, setQty] = useState(1);
+  const [sel, setSel] = useState(0);
   const [adding, setAdding] = useState(false);
   const [err, setErr] = useState(null);
 
-  useEffect(() => { setQty(1); setErr(null); }, [detail?.item?.name]);
+  const item = detail?.item;
+  const options = item?.options && item.options.length ? item.options : (item ? [{
+    item_code: item.item_code, stem_length: null,
+    price_list_rate: item.price_list_rate, price_currency: item.price_currency,
+    price_uom: item.price_uom, stock_uom: item.stock_uom,
+  }] : []);
+
+  // Reset qty + default to the first priced length whenever the item changes.
+  useEffect(() => {
+    setQty(1); setErr(null);
+    const fp = options.findIndex((o) => o.price_list_rate != null);
+    setSel(fp === -1 ? 0 : fp);
+  }, [item?.name]);
 
   if (!detail) return null;
 
+  const opt = options[sel] || options[0] || {};
+  const multi = options.length > 1;
+
   async function add() {
-    if (!detail.item) return;
+    if (!opt.item_code) return;
     setAdding(true); setErr(null);
     try {
-      await addToCart(detail.item.item_code, qty);
+      await addToCart(opt.item_code, qty);
       closeDetail();
       openCart();
     } catch (e) { setErr(e.message); }
     finally { setAdding(false); }
   }
 
-  const item = detail.item;
   const img = item?.website_image || item?.thumbnail;
-  const hasPrice = item?.price_list_rate != null;
+  const hasPrice = opt.price_list_rate != null;
 
   return (
     <>
@@ -35,7 +50,7 @@ export default function ItemDrawer() {
         <div className="drawer-hd">
           <div className="drawer-title">
             {item?.web_item_name || item?.item_name || 'Loading'}
-            <small>{item?.item_code}</small>
+            <small>{opt.item_code}</small>
           </div>
           <button className="drawer-close" onClick={closeDetail}><Icon name="close" /></button>
         </div>
@@ -58,12 +73,36 @@ export default function ItemDrawer() {
                 ? <div className="detail-desc" dangerouslySetInnerHTML={{ __html: item.web_long_description }} />
                 : item.description && <div className="detail-desc">{item.description}</div>}
 
+              {multi && (
+                <div className="detail-lengths">
+                  <div className="detail-lengths-label">
+                    <Icon name="straighten" />Choose stem length
+                  </div>
+                  <div className="length-grid">
+                    {options.map((o, i) => (
+                      <button
+                        key={o.item_code}
+                        type="button"
+                        className={`length-opt${i === sel ? ' active' : ''}`}
+                        onClick={() => setSel(i)}
+                      >
+                        <span className="lo-cm">{o.stem_length || o.item_name}</span>
+                        <span className="lo-price">
+                          {o.price_list_rate != null ? fmtMoney(o.price_list_rate, o.price_currency) : 'On request'}
+                        </span>
+                        {i === sel && <Icon name="check_circle" className="lo-check" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="detail-buy">
                 <div>
                   {hasPrice ? (
                     <div className="detail-price">
-                      {fmtMoney(item.price_list_rate, item.price_currency)}
-                      <small>per {item.price_uom || item.stock_uom || 'each'}{item.min_qty ? ` · min ${item.min_qty}` : ''}</small>
+                      {fmtMoney(opt.price_list_rate, opt.price_currency)}
+                      <small>per {opt.price_uom || opt.stock_uom || item.stock_uom || 'each'}</small>
                     </div>
                   ) : (
                     <div>

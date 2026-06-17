@@ -13,7 +13,7 @@ export default function Nav() {
     <nav className="nav">
       <a href="/customer-portal" className="brand">
         <div className="brand-mark"><Logo /></div>
-        <span>Karen Roses</span>
+        <span>Mona Flowers</span>
       </a>
       <div className="brand-sub">Shop</div>
 
@@ -39,9 +39,9 @@ export default function Nav() {
           title="Staff: shop on behalf of a customer"
           clearLabel="Stop impersonating"
         />
-        <a className="nav-link" href="/customer-portal" title="Customer portal">
-          <Icon name="person" />
-          <span>My account</span>
+        <a className="nav-link" href="/customer-portal" title="Go to your customer portal">
+          <Icon name="account_circle" />
+          <span>Customer Portal</span>
         </a>
         {hasCustomer && (
           <button className="nav-link" onClick={openReorder} title="Reorder from past orders or saved profiles">

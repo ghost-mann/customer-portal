@@ -223,6 +223,57 @@ button{font-family:inherit;}
 .item-add .material-symbols-outlined{font-size:17px;}
 .item-add.disabled{opacity:0.4;pointer-events:none;}
 
+/* Variety card: "from" price + a range-of-lengths hint */
+.item-price .from{
+  font-family:var(--mono);font-size:9.5px;color:var(--text-3);font-weight:500;
+  text-transform:uppercase;letter-spacing:0.06em;margin-right:1px;
+}
+.item-lengths-hint{
+  display:flex;align-items:center;gap:5px;margin:-2px 0 9px;
+  font-family:var(--mono);font-size:10.5px;color:var(--text-3);font-weight:500;
+}
+.item-lengths-hint .material-symbols-outlined{font-size:14px;color:var(--accent);}
+.item-variants{
+  position:absolute;top:8px;right:8px;
+  font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:0.04em;
+  padding:3px 7px;border-radius:999px;
+  background:rgba(255,255,255,0.9);color:var(--accent-2);
+  border:1px solid #cfdbd1;backdrop-filter:blur(3px);
+}
+.item-add.select{background:var(--accent-soft);border-color:#cfdbd1;color:var(--accent-2);}
+.item-add.select:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* Drawer: classy stem-length selector */
+.detail-lengths{margin:18px 0 4px;}
+.detail-lengths-label{
+  display:flex;align-items:center;gap:6px;
+  font-size:10.5px;color:var(--text-3);text-transform:uppercase;
+  letter-spacing:0.12em;font-weight:600;margin-bottom:10px;
+}
+.detail-lengths-label .material-symbols-outlined{font-size:15px;color:var(--accent);}
+.length-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;}
+.length-opt{
+  position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:3px;
+  padding:11px 12px;border-radius:11px;cursor:pointer;text-align:left;
+  background:var(--surface-2);border:1px solid var(--border);
+  transition:transform 0.14s,border-color 0.14s,background 0.14s,box-shadow 0.14s;
+}
+.length-opt:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:var(--shadow);}
+.length-opt.active{
+  border-color:var(--accent);background:var(--accent-soft);
+  box-shadow:0 0 0 1px var(--accent) inset;
+}
+.lo-cm{
+  font-family:var(--serif);font-size:17px;font-weight:500;letter-spacing:-0.01em;
+  color:var(--text);line-height:1.1;
+}
+.length-opt.active .lo-cm{color:var(--accent-2);}
+.lo-price{font-family:var(--mono);font-size:10.5px;color:var(--text-3);font-weight:500;}
+.length-opt.active .lo-price{color:var(--accent-2);}
+.lo-check{
+  position:absolute;top:8px;right:8px;font-size:15px;color:var(--accent);
+}
+
 /* ============ DETAIL DRAWER ============ */
 .drawer-bd{
   position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:90;

@@ -516,3 +516,13 @@ textarea.fc{resize:vertical;min-height:80px;line-height:1.55;font-family:var(--f
   font-family:var(--mono);font-size:9px;color:var(--text-3);
   text-transform:uppercase;letter-spacing:.1em;margin-top:6px;
 }
+
+/* Credit-note PDF link in a claim's Resolution section */
+.cn-link{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 8px;border-radius:6px;text-decoration:none;
+  background:var(--surface-2);border:1px solid var(--border);
+  color:var(--accent-2);font-size:12px;transition:all .12s;
+}
+.cn-link:hover{border-color:var(--accent);background:var(--accent-soft);}
+.cn-link .material-symbols-outlined{font-size:13px;}
