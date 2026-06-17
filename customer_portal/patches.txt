@@ -4,3 +4,4 @@
 
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
+customer_portal.patches.add_customer_portal_navbar_item

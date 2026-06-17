@@ -42,7 +42,7 @@ export default function App() {
   if (!content) {
     return (
       <>
-        <Nav page={page} navigate={navigate} brand={{ name: 'Customer Portal' }} isLoggedIn={!!user} />
+        <Nav page={page} navigate={navigate} brand={{ name: 'Mona Flowers' }} isLoggedIn={!!user} />
         <div className="loading" style={{ paddingTop: 120 }}>Loading</div>
       </>
     );

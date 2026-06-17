@@ -8,6 +8,7 @@ Auth model: identical to customer_portal.api.customer — every method scopes to
 Customer linked to the current user. Staff users may impersonate.
 """
 
+import re
 import time
 
 import frappe
@@ -16,7 +17,7 @@ from frappe import _
 from customer_portal.api.customer import _resolve_customer, _is_staff
 
 
-# Karen Roses is a flower farm — the shop only lists floral item groups (rose
+# Mona Flowers is a flower farm — the shop only lists floral item groups (rose
 # grades + variety/filler/foliage), filtering out operational groups like
 # hardware, dairy, motor parts, chemicals, etc. Curated from the live Item Group
 # list. Groups with no sellable items simply won't appear as categories.
@@ -25,7 +26,56 @@ FLOWER_ITEM_GROUPS = (
 	"Chrysanthemums", "Summer Flowers", "Flowers Purchased (Sprays & Carnations)",
 	"Gypsophilla", "Limonium", "Lepidium", "Solidago", "Eryngium", "Caryopteris",
 	"Papyrus", "Photinia", "Hard Ruscus", "Agapanthus",
+	# Mona Flowers foliage — sold by the stem alongside roses
+	"Eucalyptus",
 )
+
+
+def _length_cm(label: str | None) -> int | None:
+	"""Pull the numeric centimetres out of a Stem Length value like "120cm"."""
+	m = re.search(r"\d+", label or "")
+	return int(m.group()) if m else None
+
+
+def _stem_lengths(leaf_names: list) -> dict:
+	"""Map each variant Item -> its "Stem Length" attribute value (e.g. "120cm")."""
+	out = {}
+	if not leaf_names:
+		return out
+	for a in frappe.get_all(
+		"Item Variant Attribute",
+		filters={"parent": ["in", leaf_names], "attribute": "Stem Length"},
+		fields=["parent", "attribute_value"],
+	) or []:
+		if a.get("attribute_value"):
+			out[a["parent"]] = a["attribute_value"]
+	return out
+
+
+def _build_options(leaf_rows: list, pl: str | None) -> list:
+	"""Turn a set of leaf Item rows (the sellable length variants of one variety)
+	into a price-tagged, length-sorted list of buy options. Each row must carry
+	name, item_code, item_name, stock_uom and image."""
+	lengths = _stem_lengths([r["name"] for r in leaf_rows])
+	rates = _rates_for([r["item_code"] for r in leaf_rows], pl)
+	opts = []
+	for r in leaf_rows:
+		label = lengths.get(r["name"])
+		pr = rates.get(r["item_code"]) or {}
+		opts.append({
+			"item_code":       r["item_code"],
+			"item_name":       r["item_name"],
+			"stem_length":     label,
+			"length_cm":       _length_cm(label),
+			"price_list_rate": pr.get("price_list_rate"),
+			"price_currency":  pr.get("currency"),
+			"price_uom":       pr.get("uom"),
+			"stock_uom":       r.get("stock_uom"),
+			"image":           r.get("image"),
+		})
+	# Shortest stems first; options with no length sort last.
+	opts.sort(key=lambda o: (o["length_cm"] is None, o["length_cm"] or 0))
+	return opts
 
 
 def _mutate_quotation(qname: str, mutate, max_retries: int = 5):
@@ -201,9 +251,11 @@ def list_items(
 	in_season: int | str | None = None,
 	limit: int = 60,
 ) -> list:
-	"""Filtered list of sellable Items with prices. Sourced from the Item master
-	(templates + standalone; variant children are folded under their template),
-	so the shop reflects the whole catalogue, not just curated Website Items."""
+	"""Sellable catalogue grouped by variety. Each entry is one variety (the
+	variant template, e.g. "Mandala") carrying an `options` list of its sellable
+	stem-length variants ("40cm" … "120cm") with per-length prices. Standalone
+	items (no template) come back as a single-option variety. Sourced from the
+	Item master so the shop reflects the whole catalogue, not just Website Items."""
 	cust = _resolve_customer(customer, allow_staff_unset=True)
 	pl = _price_list(cust) if cust else None
 
@@ -218,7 +270,12 @@ def list_items(
 		conditions.append("i.item_group = %(category)s")
 		values["category"] = category
 	if search:
-		conditions.append("(i.item_name LIKE %(q)s OR i.item_code LIKE %(q)s)")
+		# Match the variety (template) name too, so searching "Mandala" keeps all
+		# its lengths together rather than only variants whose code matches.
+		conditions.append("""(i.item_name LIKE %(q)s OR i.item_code LIKE %(q)s
+		                      OR i.variant_of LIKE %(q)s
+		                      OR EXISTS (SELECT 1 FROM `tabItem` p
+		                                 WHERE p.name = i.variant_of AND p.item_name LIKE %(q)s))""")
 		values["q"] = f"%{search}%"
 	if farm:
 		conditions.append("""EXISTS (
@@ -231,38 +288,97 @@ def list_items(
 			SELECT 1 FROM `tabTag Link` tl
 			WHERE tl.document_name = i.name AND tl.tag = 'in-season'
 		)""")
-	values["limit"] = int(limit)
 
+	# Fetch every matching leaf item, then fold into varieties below and cap the
+	# number of *varieties* at `limit` (a generous row cap covers Mona's catalogue).
 	rows = frappe.db.sql(f"""
-		SELECT i.name, i.item_code,
-		       i.item_name AS web_item_name, i.item_name,
+		SELECT i.name, i.item_code, i.item_name,
 		       i.item_group, i.stock_uom, i.description, i.brand,
-		       i.image AS website_image, i.image AS thumbnail,
-		       NULL AS route, 0 AS ranking, i.has_variants
+		       i.image, i.variant_of
 		FROM `tabItem` i
 		WHERE {' AND '.join(conditions)}
 		ORDER BY i.item_name ASC
-		LIMIT %(limit)s
+		LIMIT 5000
 	""", values=values, as_dict=True)
+	if not rows:
+		return []
 
-	# Batch price + tag lookups (one query each) instead of per-row.
+	# Variety display name / image come from the template item where present.
+	tmpl_names = list({r["variant_of"] for r in rows if r.get("variant_of")})
+	tmpl_by = {}
+	if tmpl_names:
+		for t in frappe.get_all("Item", filters={"name": ["in", tmpl_names]},
+		                        fields=["name", "item_name", "image", "description", "brand"]) or []:
+			tmpl_by[t["name"]] = t
+
+	# Per-leaf price + length + tags, batched.
+	leaf_names = [r["name"] for r in rows]
+	lengths = _stem_lengths(leaf_names)
 	rates = _rates_for([r["item_code"] for r in rows], pl)
-	names = [r["name"] for r in rows]
 	tags_by = {}
-	if names:
-		for t in frappe.get_all("Tag Link", filters={"document_name": ["in", names]},
-		                        fields=["document_name", "tag"]) or []:
-			tags_by.setdefault(t["document_name"], []).append(t["tag"])
+	for t in frappe.get_all("Tag Link", filters={"document_name": ["in", leaf_names]},
+	                        fields=["document_name", "tag"]) or []:
+		tags_by.setdefault(t["document_name"], []).append(t["tag"])
+
+	varieties, order = {}, []
 	for r in rows:
-		pr = rates.get(r["item_code"])
-		r["price_list_rate"] = pr.get("price_list_rate") if pr else None
-		r["price_currency"]  = pr.get("currency") if pr else None
-		r["price_uom"]       = pr.get("uom") if pr else None
-		r["min_qty"]         = None
+		key = r.get("variant_of") or r["item_code"]
+		tmpl = tmpl_by.get(r.get("variant_of")) if r.get("variant_of") else None
+		name = (tmpl or {}).get("item_name") or r["item_name"]
+		if key not in varieties:
+			varieties[key] = {
+				"name":          key,
+				"web_item_name": name,
+				"item_name":     name,
+				"item_group":    r["item_group"],
+				"stock_uom":     r["stock_uom"],
+				"description":   r.get("description") or (tmpl or {}).get("description"),
+				"brand":         r.get("brand") or (tmpl or {}).get("brand"),
+				"website_image": r.get("image") or (tmpl or {}).get("image"),
+				"thumbnail":     r.get("image") or (tmpl or {}).get("image"),
+				"options":       [],
+				"farms":         [],
+				"in_season":     False,
+			}
+			order.append(key)
+		v = varieties[key]
+		if not v["website_image"] and r.get("image"):
+			v["website_image"] = v["thumbnail"] = r["image"]
+		label = lengths.get(r["name"])
+		pr = rates.get(r["item_code"]) or {}
+		v["options"].append({
+			"item_code":       r["item_code"],
+			"item_name":       r["item_name"],
+			"stem_length":     label,
+			"length_cm":       _length_cm(label),
+			"price_list_rate": pr.get("price_list_rate"),
+			"price_currency":  pr.get("currency"),
+			"price_uom":       pr.get("uom"),
+			"stock_uom":       r["stock_uom"],
+		})
 		tgs = tags_by.get(r["name"], [])
-		r["farms"]     = [t[5:] for t in tgs if t.startswith("farm:")]
-		r["in_season"] = "in-season" in tgs
-	return rows
+		for t in tgs:
+			if t.startswith("farm:") and t[5:] not in v["farms"]:
+				v["farms"].append(t[5:])
+		if "in-season" in tgs:
+			v["in_season"] = True
+
+	out = []
+	for key in order[: int(limit)]:
+		v = varieties[key]
+		v["options"].sort(key=lambda o: (o["length_cm"] is None, o["length_cm"] or 0))
+		priced = [o for o in v["options"] if o["price_list_rate"] is not None]
+		default = priced[0] if priced else v["options"][0]
+		v["option_count"]    = len(v["options"])
+		v["item_code"]       = default["item_code"]   # default selection
+		v["price_list_rate"] = default["price_list_rate"]
+		v["price_currency"]  = default["price_currency"]
+		v["price_uom"]       = default["price_uom"]
+		v["price_min"]       = min((o["price_list_rate"] for o in priced), default=None)
+		v["price_max"]       = max((o["price_list_rate"] for o in priced), default=None)
+		v["min_qty"]         = None
+		out.append(v)
+	return out
 
 
 @frappe.whitelist()
@@ -274,37 +390,69 @@ def get_item(name: str, customer: str | None = None) -> dict:
 	it = frappe.db.get_value(
 		"Item", name,
 		["name", "item_code", "item_name", "item_group", "stock_uom",
-		 "description", "image", "brand", "has_variants"],
+		 "description", "image", "brand", "has_variants", "variant_of"],
 		as_dict=True,
 	)
 	if not it:
 		frappe.throw(_("This item is not available."), frappe.PermissionError)
 
-	out = {
+	# Resolve the variety: a template (has_variants), a variant (fold to its
+	# template + siblings), or a standalone item (a one-option variety).
+	if it.has_variants:
+		template_name, variety_name = it.name, it.item_name
+		variety_img, variety_desc = it.image, it.description
+	elif it.variant_of:
+		template_name = it.variant_of
+		t = frappe.db.get_value("Item", it.variant_of,
+		                        ["item_name", "image", "description"], as_dict=True) or {}
+		variety_name = t.get("item_name") or it.item_name
+		variety_img  = it.image or t.get("image")
+		variety_desc = it.description or t.get("description")
+	else:
+		template_name, variety_name = None, it.item_name
+		variety_img, variety_desc = it.image, it.description
+
+	if template_name:
+		leaf_rows = frappe.get_all(
+			"Item",
+			filters={"variant_of": template_name, "has_variants": 0,
+			         "is_sales_item": 1, "disabled": 0},
+			fields=["name", "item_code", "item_name", "stock_uom", "image"],
+		) or []
+	else:
+		leaf_rows = [{"name": it.name, "item_code": it.item_code, "item_name": it.item_name,
+		              "stock_uom": it.stock_uom, "image": it.image}]
+
+	options = _build_options(leaf_rows, pl)
+	priced = [o for o in options if o["price_list_rate"] is not None]
+	default = priced[0] if priced else (options[0] if options else None)
+
+	return {
 		"name": it.name,
-		"item_code": it.item_code,
-		"web_item_name": it.item_name,
-		"item_name": it.item_name,
+		"item_code": default["item_code"] if default else it.item_code,
+		"web_item_name": variety_name,
+		"item_name": variety_name,
 		"item_group": it.item_group,
 		"stock_uom": it.stock_uom,
-		"description": it.description,
-		"web_long_description": it.description,
-		"website_image": it.image,
-		"thumbnail": it.image,
+		"description": variety_desc,
+		"web_long_description": variety_desc,
+		"website_image": variety_img,
+		"thumbnail": variety_img,
 		"brand": it.brand,
 		"route": None,
 		"slideshow": None,
 		"has_variants": it.has_variants,
+		"options": options,
+		"option_count": len(options),
+		"price_list_rate": default["price_list_rate"] if default else None,
+		"price_currency":  default["price_currency"] if default else None,
+		"price_uom":       default["price_uom"] if default else None,
+		"price_min": min((o["price_list_rate"] for o in priced), default=None),
+		"price_max": max((o["price_list_rate"] for o in priced), default=None),
+		"min_qty": None,
+		"farms": _farms_for_item(it.name),
+		"in_season": _in_season(it.name),
 	}
-	rates = _rates_for([it.item_code], pl)
-	pr = rates.get(it.item_code)
-	out["price_list_rate"] = pr.get("price_list_rate") if pr else None
-	out["price_currency"]  = pr.get("currency") if pr else None
-	out["price_uom"]       = pr.get("uom") if pr else None
-	out["min_qty"]         = None
-	out["farms"]    = _farms_for_item(it.name)
-	out["in_season"] = _in_season(it.name)
-	return out
 
 
 # ── Cart ────────────────────────────────────────────────────────────────────
