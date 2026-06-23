@@ -15,7 +15,7 @@ export default function Nav({ ctx }) {
     <nav className="nav">
       <a href="/customer-portal" className="brand">
         <div className="brand-mark"><Logo /></div>
-        <b>Mona Flowers</b>
+        <b>Karen Roses</b>
       </a>
       <div className="brand-sub">Customer portal</div>
       <div className="nav-right">

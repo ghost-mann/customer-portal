@@ -13,7 +13,7 @@ export default function Nav() {
     <nav className="nav">
       <a href="/customer-portal" className="brand">
         <div className="brand-mark"><Logo /></div>
-        <span>Mona Flowers</span>
+        <span>Karen Roses</span>
       </a>
       <div className="brand-sub">Shop</div>
 

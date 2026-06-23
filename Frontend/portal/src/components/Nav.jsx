@@ -6,7 +6,7 @@ export default function Nav({ user, fullName, isGuest, onLogout }) {
     <nav className="nav">
       <a href="/portal" className="brand">
         <div className="brand-mark"><Logo /></div>
-        <b>Mona Flowers</b>
+        <b>Karen Roses</b>
       </a>
       <div className="nav-right">
         {isGuest ? (

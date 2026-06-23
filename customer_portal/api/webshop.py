@@ -17,7 +17,7 @@ from frappe import _
 from customer_portal.api.customer import _resolve_customer, _is_staff
 
 
-# Mona Flowers is a flower farm — the shop only lists floral item groups (rose
+# Karen Roses is a flower farm — the shop only lists floral item groups (rose
 # grades + variety/filler/foliage), filtering out operational groups like
 # hardware, dairy, motor parts, chemicals, etc. Curated from the live Item Group
 # list. Groups with no sellable items simply won't appear as categories.
@@ -26,7 +26,7 @@ FLOWER_ITEM_GROUPS = (
 	"Chrysanthemums", "Summer Flowers", "Flowers Purchased (Sprays & Carnations)",
 	"Gypsophilla", "Limonium", "Lepidium", "Solidago", "Eryngium", "Caryopteris",
 	"Papyrus", "Photinia", "Hard Ruscus", "Agapanthus",
-	# Mona Flowers foliage — sold by the stem alongside roses
+	# Karen Roses foliage — sold by the stem alongside roses
 	"Eucalyptus",
 )
 
@@ -290,7 +290,7 @@ def list_items(
 		)""")
 
 	# Fetch every matching leaf item, then fold into varieties below and cap the
-	# number of *varieties* at `limit` (a generous row cap covers Mona's catalogue).
+	# number of *varieties* at `limit` (a generous row cap covers Karen's catalogue).
 	rows = frappe.db.sql(f"""
 		SELECT i.name, i.item_code, i.item_name,
 		       i.item_group, i.stock_uom, i.description, i.brand,
