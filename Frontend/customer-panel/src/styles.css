@@ -67,7 +67,7 @@ button{font-family:inherit;}
   display:flex;align-items:center;gap:11px;
   height:36px;padding:0 12px;border-radius:6px;
   cursor:pointer;font-size:13px;color:var(--text-2);
-  user-select:none;
+  user-select:none;text-decoration:none;
   transition:background 0.12s, color 0.12s;
 }
 .nav-item:hover{background:var(--hover);color:var(--text);}

@@ -18,12 +18,15 @@ const NAV = [
   ]},
   { group: 'Profile', items: [
     { key: 'account', label: 'Account', icon: 'badge' },
+    // External link back to the Frappe Desk — shown only to staff/desk users.
+    { key: 'desk', label: 'Back to Desk', icon: 'arrow_back', href: '/app', staffOnly: true },
   ]},
 ];
 
 export default function Sidebar() {
-  const { page, setPage, data } = useStore();
+  const { page, setPage, data, ctx } = useStore();
   const k = data.overview?.kpis || {};
+  const isStaff = !!(ctx?.is_staff || ctx?.is_account_manager);
 
   return (
     <aside className="side">
@@ -31,8 +34,17 @@ export default function Sidebar() {
         <div key={g.group}>
           <div className="side-label">{g.group}</div>
           <div className="side-grp">
-            {g.items.map((it) => {
+            {g.items.filter((it) => !it.staffOnly || isStaff).map((it) => {
               const count = it.countKey ? k[it.countKey] : null;
+              // External links (e.g. Back to Desk) render as anchors, not SPA pages.
+              if (it.href) {
+                return (
+                  <a key={it.key} href={it.href} className="nav-item">
+                    <Icon name={it.icon} />
+                    <span>{it.label}</span>
+                  </a>
+                );
+              }
               return (
                 <div
                   key={it.key}

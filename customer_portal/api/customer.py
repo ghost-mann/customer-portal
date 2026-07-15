@@ -119,32 +119,39 @@ def list_my_accounts(search: str = "", limit: int = 200) -> list:
 
 	names = [c["name"] for c in custs]
 
-	def _grouped_count(doctype: str, extra_filters: dict) -> dict:
-		"""customer → row count, in one grouped query."""
-		rows = frappe.get_all(
-			doctype,
-			filters={"customer": ["in", names], **extra_filters},
-			fields=["customer", "count(name) as cnt"],
-			group_by="customer",
-		) or []
-		return {r["customer"]: r["cnt"] for r in rows}
+	# NB: aggregates via the query builder — Frappe v16 rejects SQL-function
+	# strings ("count(name) as cnt") in get_all `fields`.
+	from frappe.query_builder.functions import Count, Max
 
-	open_orders = _grouped_count("Sales Order", {
-		"docstatus": 1,
-		"status": ["not in", ["Closed", "Completed", "Cancelled"]],
-	})
-	overdue_inv = _grouped_count("Sales Invoice", {
-		"docstatus": 1,
-		"status": ["in", ["Overdue", "Unpaid"]],
-	})
+	def _grouped_count(doctype: str, status_cond) -> dict:
+		"""customer → submitted-row count, in one grouped query."""
+		T = frappe.qb.DocType(doctype)
+		q = (
+			frappe.qb.from_(T)
+			.select(T.customer, Count(T.name).as_("cnt"))
+			.where((T.customer.isin(names)) & (T.docstatus == 1))
+			.groupby(T.customer)
+		)
+		q = status_cond(T, q)
+		return {r["customer"]: r["cnt"] for r in q.run(as_dict=True)}
+
+	open_orders = _grouped_count(
+		"Sales Order",
+		lambda T, q: q.where(T.status.notin(["Closed", "Completed", "Cancelled"])),
+	)
+	overdue_inv = _grouped_count(
+		"Sales Invoice",
+		lambda T, q: q.where(T.status.isin(["Overdue", "Unpaid"])),
+	)
 
 	# Last activity = most recent Sales Order date per customer
-	last_rows = frappe.get_all(
-		"Sales Order",
-		filters={"customer": ["in", names], "docstatus": ["!=", 2]},
-		fields=["customer", "max(transaction_date) as last_date"],
-		group_by="customer",
-	) or []
+	SO = frappe.qb.DocType("Sales Order")
+	last_rows = (
+		frappe.qb.from_(SO)
+		.select(SO.customer, Max(SO.transaction_date).as_("last_date"))
+		.where((SO.customer.isin(names)) & (SO.docstatus != 2))
+		.groupby(SO.customer)
+	).run(as_dict=True) or []
 	last_activity = {r["customer"]: r["last_date"] for r in last_rows}
 
 	for c in custs:
