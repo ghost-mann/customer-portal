@@ -37,6 +37,16 @@ function readInitialQuery() {
   return patch;
 }
 
+// Cheap (no-request) initial read of the `wish_count` cookie upande_webshop's
+// wishlist doctype sets on every add/remove — see the `wishlistCount` field
+// below for the full rationale. Returns null (unknown) when the cookie has
+// never been set, e.g. a guest or a user who has never touched the wishlist.
+function readWishCountCookie() {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/(?:^|; )wish_count=(\d+)/);
+  return match ? Number(match[1]) : null;
+}
+
 function syncUrl(query) {
   if (typeof window === 'undefined') return;
   const params = new URLSearchParams(window.location.search);
@@ -78,6 +88,20 @@ export const useStore = create((set, get) => ({
   // this — their add-to-cart stashes + redirects to login instead.
   cartCount: 0,
   setCartCount: (n) => set({ cartCount: Number(n) || 0 }),
+
+  // Wishlist badge count (Nav, RT7). There is no whitelisted "count my
+  // wishlist" method (see getWishlistItems's comment in lib/api.js for why a
+  // full list isn't cheap either — it pages the whole catalogue), but
+  // add_to_wishlist/remove_from_wishlist both already return `wish_count`
+  // AND set it as a plain `wish_count` cookie server-side
+  // (doctype/wishlist/wishlist.py's _set_wish_count_cookie — the same cookie
+  // upande_webshop's own vanilla-JS theme reads in public/js/wishlist.js).
+  // Reading that cookie on boot is free (no request) and gives a same-session-
+  // or-earlier count immediately; WishlistButton then keeps it live by
+  // forwarding each toggle's `wish_count`. Guests never have a meaningful
+  // count here — Nav only renders the badge for a logged-in session.
+  wishlistCount: readWishCountCookie(),
+  setWishlistCount: (n) => set({ wishlistCount: Number(n) || 0 }),
 
   // RT4 cart slice. `cart` is the raw get_cart_quotation() response
   // ({ doc, shipping_addresses, billing_addresses, shipping_rules, cart_settings }).

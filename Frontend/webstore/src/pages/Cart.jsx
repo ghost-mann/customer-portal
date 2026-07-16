@@ -18,18 +18,9 @@ import {
   getGuestRedirectOnAction,
 } from '../lib/api';
 import QtyStepper from '../components/QtyStepper';
+import { formatMoney } from '../lib/format';
 
 const SEARCH_DEBOUNCE_MS = 300;
-
-function formatMoney(amount, currency) {
-  const n = Number(amount) || 0;
-  if (!currency) return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  try {
-    return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(n);
-  } catch (e) {
-    return `${currency} ${n.toFixed(2)}`;
-  }
-}
 
 // Debounced Link-style search box used for both Delivery Point and Consignee —
 // both endpoints are guest-safe Link searches (search_delivery_points /

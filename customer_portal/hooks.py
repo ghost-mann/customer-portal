@@ -16,8 +16,17 @@ website_route_rules = [
 ]
 
 # The B2B /website-shop was retired and replaced by the public /upande-webstore.
+# RT7 user requirement: the ecommerce storefront is the site's main landing
+# page. `source: "/"` only matches the bare root (PathResolver strips leading/
+# trailing slashes before matching, so this compiles to the anchored pattern
+# `$`, which matches the empty string only — never a prefix of "/about" etc.),
+# so this 301s "/" to "/upande-webstore" without touching `website_route_rules`
+# or www/home.html: the marketing `site` area (home.html) keeps serving
+# /about, /varieties, /contact untouched, and remains reachable directly (and
+# restorable as the root) by removing/reordering this one rule.
 website_redirects = [
 	{"source": "/website-shop", "target": "/upande-webstore"},
+	{"source": "/", "target": "/upande-webstore"},
 ]
 
 # When a credit note (Sales Invoice with is_return=1) is submitted/cancelled,

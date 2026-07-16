@@ -11,6 +11,7 @@ import { useStore } from '../store';
 // for cart mutations, instead of ever calling the wishlist API as a guest.
 export default function WishlistButton({ itemCode, wished, className = '', size }) {
   const setItemWished = useStore((s) => s.setItemWished);
+  const setWishlistCount = useStore((s) => s.setWishlistCount);
   const [localWished, setLocalWished] = useState(Boolean(wished));
   const [busy, setBusy] = useState(false);
 
@@ -33,8 +34,8 @@ export default function WishlistButton({ itemCode, wished, className = '', size 
     setItemWished(itemCode, next);
     setBusy(true);
     try {
-      if (next) await addToWishlist(itemCode);
-      else await removeFromWishlist(itemCode);
+      const res = next ? await addToWishlist(itemCode) : await removeFromWishlist(itemCode);
+      setWishlistCount(res && res.wish_count);
     } catch (err) {
       // Reconcile: the mutation failed server-side, revert the optimistic flip.
       setLocalWished(!next);

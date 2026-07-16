@@ -2,18 +2,7 @@ import { useEffect, useState } from 'react';
 import { useRoute } from '../router';
 import { useStore } from '../store';
 import { getOrderDoc, getGuestRedirectOnAction } from '../lib/api';
-
-// TODO(RT7): formatMoney is duplicated between Cart.jsx and Order.jsx —
-// extract to lib/format.js.
-function formatMoney(amount, currency) {
-  const n = Number(amount) || 0;
-  if (!currency) return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  try {
-    return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(n);
-  } catch (e) {
-    return `${currency} ${n.toFixed(2)}`;
-  }
-}
+import { formatMoney } from '../lib/format';
 
 // `/upande-webstore/orders/<name>` — the post-checkout confirmation.
 //

@@ -7,7 +7,14 @@ export const brand = {
   tagline: 'Fresh from the farm',
   palette: {
     ink:       '#0f0f0f',
+    // Bare "R,G,B" companions to ink/paper, consumed as rgba(var(--ink-rgb),X)
+    // wherever the nav/hero/badges need a translucent ink or paper overlay —
+    // CSS custom properties can't be decomposed into channels at parse time,
+    // so a hex-only token can't feed an rgba() alpha blend. Keep these in
+    // lockstep with `ink`/`paper` above on any per-farm reskin.
+    inkRgb:    '15,15,15',
     paper:     '#faf9f6',
+    paperRgb:  '250,249,246',
     surface:   '#ffffff',
     gold:      '#c8a24c',
     goldSoft:  '#f3ebd7',
@@ -28,7 +35,7 @@ export const brand = {
 };
 
 const CSS_VARS = {
-  ink: '--ink', paper: '--paper', surface: '--surface',
+  ink: '--ink', inkRgb: '--ink-rgb', paper: '--paper', paperRgb: '--paper-rgb', surface: '--surface',
   gold: '--gold', goldSoft: '--gold-soft', line: '--line', muted: '--muted',
   good: '--good', goodSoft: '--good-soft', bad: '--bad', badSoft: '--bad-soft',
 };
