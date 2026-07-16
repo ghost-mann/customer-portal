@@ -7,7 +7,6 @@ export default function Home() {
   const home = useStore((s) => s.home);
   const { navigate } = useRoute();
   if (!home) return null;
-  const featured = home.featured?.length ? home.featured : home.new_arrivals;
 
   return (
     <div className="ws-home">
@@ -30,12 +29,14 @@ export default function Home() {
         </div>
       )}
 
-      <section className="ws-section">
-        <div className="ws-section-hd"><h2>Featured</h2></div>
-        <div className="ws-grid">
-          {featured.map((p) => <ProductCard key={p.name} product={p} />)}
-        </div>
-      </section>
+      {home.featured?.length > 0 && (
+        <section className="ws-section">
+          <div className="ws-section-hd"><h2>Featured</h2></div>
+          <div className="ws-grid">
+            {home.featured.map((p) => <ProductCard key={p.name} product={p} />)}
+          </div>
+        </section>
+      )}
 
       {home.categories?.length > 0 && (
         <section className="ws-section">

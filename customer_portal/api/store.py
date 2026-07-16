@@ -49,7 +49,7 @@ def _hide_prices_for_guest():
 def _card(web_item_name, hide_prices=False):
     """Normalize a Website Item into the canonical storefront card dict."""
     wi = frappe.db.get_value(
-        "Website Item", web_item_name,
+        "Website Item", {"name": web_item_name, "published": 1},
         ["name", "web_item_name", "item_name", "item_code", "item_group",
          "brand", "route", "website_image", "thumbnail", "short_description",
          "on_backorder"],
