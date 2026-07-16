@@ -19,6 +19,12 @@ import { getProductFilterData } from './lib/api';
 // rides in the item payload and drives `sub_categories`.
 const DEFAULT_QUERY = { search: '', field_filters: {}, attribute_filters: {}, item_group: '', start: 0 };
 
+// Monotonic request token — `runQuery` calls can overlap (rapid filter/
+// category changes) and resolve out of order. Each call captures the
+// current value before its await; if a newer call has since bumped it,
+// the stale response is dropped instead of clobbering fresher state.
+let _reqSeq = 0;
+
 // Reflect search/category into the URL (?q=&category=) so a shared link or
 // back/forward reproduces the same shop view. Uses replaceState — filter
 // changes are not distinct history entries.
@@ -76,6 +82,10 @@ export const useStore = create((set, get) => ({
     const query = { ...get().query, ...patch };
     if (resetStart) query.start = 0;
     set({ query, [first ? 'loading' : 'filtering']: true, error: null });
+    // Capture the request token before the await — if a later `runQuery`
+    // call bumps `_reqSeq` while this one is in flight, its response is
+    // stale by the time it comes back and must not overwrite newer state.
+    const token = ++_reqSeq;
     try {
       const data = await getProductFilterData({
         search: query.search || undefined,
@@ -85,6 +95,7 @@ export const useStore = create((set, get) => ({
         start: query.start,
         from_filters: resetStart,
       });
+      if (token !== _reqSeq) return; // superseded by a newer request
       const items = data.items || [];
       syncUrl(query);
       set((s) => {
@@ -102,6 +113,7 @@ export const useStore = create((set, get) => ({
         };
       });
     } catch (e) {
+      if (token !== _reqSeq) return; // superseded by a newer request
       set({ error: String(e), loading: false, filtering: false });
     }
   },
