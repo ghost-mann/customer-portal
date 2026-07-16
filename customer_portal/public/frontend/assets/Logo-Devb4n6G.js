@@ -1,0 +1,1 @@
+import{r as n,j as t}from"./base-Cr1GUJJm.js";const a="/assets/customer_portal/logo.png";function c({fallback:r="U",alt:o="Upande"}){const[s,e]=n.useState(!0);return s?t.jsx("img",{src:a,alt:o,onError:()=>e(!1),style:{width:"100%",height:"100%",objectFit:"contain"}}):t.jsx(t.Fragment,{children:r})}export{c as L};

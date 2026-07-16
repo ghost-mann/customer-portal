@@ -27,7 +27,7 @@ export default function Nav({ page, navigate, brand, isLoggedIn }) {
       <div className="nav-row">
         <a className="brand" href="/" onClick={(e) => { e.preventDefault(); go('/'); }}>
           <div className="brand-mark"><Logo /></div>
-          <span className="brand-text">{brand?.name || 'Mona Flowers'}</span>
+          <span className="brand-text">{brand?.name || 'Upande'}</span>
         </a>
         <div className={`nav-links${open ? ' open' : ''}`}>
           {LINKS.map((l) => (
