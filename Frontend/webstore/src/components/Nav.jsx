@@ -84,14 +84,6 @@ export default function Nav() {
             Wishlist{showWishlistCount ? ` (${wishlistCount})` : ''}
           </button>
         )}
-        {/* Orders lives outside the SPA — erpnext's own website_route_rules
-           map bare /orders to a portal-permission-gated Sales Order list
-           (see Order.jsx's header comment); there is no in-app order-history
-           page to route() to, so this is a real link, not navigate(). */}
-        {loggedIn && <a className="ws-nav-orders" href="/orders">Orders</a>}
-        {/* Mobile-only duplicate of the top-right Customer Portal action, so
-           it's reachable from the collapsed menu on narrow screens too. */}
-        <a className="ws-nav-portal-mobile" href={portalHref}>Customer Portal</a>
       </nav>
 
       <div className="ws-nav-right">
