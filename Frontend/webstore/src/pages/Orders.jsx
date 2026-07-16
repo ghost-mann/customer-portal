@@ -70,11 +70,23 @@ export default function Orders() {
   }
 
   if (orders === null) {
+    // list_orders is login + customer gated: it resolves the signed-in user to a
+    // linked Customer and 403s if there isn't one (e.g. a staff/admin login, or a
+    // session with no customer contact). Order history is a customer-account
+    // feature, so say that plainly instead of dumping the raw 403/exception.
+    const permissionish = /403|forbidden|permission|not permitted|please sign in/i.test(error || '');
     return (
-      <div className="ws-shop">
-        <div className="boot">
-          <h1>Could not load your orders</h1>
-          <p>{error}</p>
+      <div className="ws-shop ws-cart-page">
+        <div className="ws-empty ws-cart-guest">
+          <h1 className="ws-pd-title">
+            {permissionish ? 'No orders for this account' : 'Could not load your orders'}
+          </h1>
+          <p style={{ color: 'var(--muted)', maxWidth: 480, margin: '10px auto 20px', lineHeight: 1.6 }}>
+            {permissionish
+              ? 'Order history is available for customer accounts. If you’re signed in as staff, open the Customer Portal to view a specific customer’s orders.'
+              : 'Something went wrong loading your orders — please try again in a moment.'}
+          </p>
+          <button className="ws-btn-gold" onClick={() => navigate('/shop')}>Continue shopping</button>
         </div>
       </div>
     );
