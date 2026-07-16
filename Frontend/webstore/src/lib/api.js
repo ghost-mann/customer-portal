@@ -92,6 +92,17 @@ export const updateCartBoxType = (boxType) =>
     box_type: boxType || '',
   });
 
+// Cart-level Box Type source. `update_cart_box_type` validates against the
+// `Box Type` doctype (frappe.db.exists("Box Type", box_type)) — a different
+// doctype from the Item codes `getBoxItems` (api.get_box_items) returns — so
+// this cart-wide select must be sourced from the purpose-built storefront
+// search instead (search_box_types, cart.py ~line 2790: guest-safe, bypasses
+// permissions, returns name + packrate). -> [{value, label, description, packrate}]
+export const searchBoxTypes = (txt, limit = 20) =>
+  api('upande_webshop.upande_webshop.shopping_cart.cart.search_box_types', {
+    txt: txt || '', limit,
+  });
+
 // -> Sales Order/Quotation `name` on success, or { error: message } (not
 // thrown) when a required cart field is missing or a box-type minimum isn't
 // met — confirmed by reading place_order()/request_for_quotation() in cart.py.

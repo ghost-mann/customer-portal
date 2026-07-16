@@ -11,7 +11,7 @@ import {
   updateCartConsignee,
   updateCartLineCode,
   updateCartBoxType,
-  getBoxItems,
+  searchBoxTypes,
   placeOrder,
   requestForQuotation,
   submitCartOrder,
@@ -100,14 +100,19 @@ export default function Cart() {
   const loadCart = useStore((s) => s.loadCart);
   const setCartCount = useStore((s) => s.setCartCount);
 
-  const [boxItems, setBoxItems] = useState([]);
-  const [mutatingRow, setMutatingRow] = useState(null); // child docname in flight
-  const [mutating, setMutating] = useState(false); // cart-level field in flight
+  const [boxTypeOptions, setBoxTypeOptions] = useState([]);
+  const [mutatingRow, setMutatingRow] = useState(null); // child docname in flight (per-row spinner only)
   const [rowError, setRowError] = useState(null);
+
+  // Cart-wide "busy" flag: every mutation below shares this same flag (not a
+  // per-control one) because all cart mutations save the SAME parent
+  // Quotation/Sales Order — concurrent saves race on Frappe's optimistic lock
+  // (TimestampMismatchError). Disabling every mutation control while ANY one
+  // is in flight is the simplest correct guard against that race.
+  const [cartBusy, setCartBusy] = useState(false);
 
   const [couponDraft, setCouponDraft] = useState('');
   const [referralDraft, setReferralDraft] = useState('');
-  const [couponBusy, setCouponBusy] = useState(false);
   const [couponError, setCouponError] = useState(null);
 
   const [lineCodeDraft, setLineCodeDraft] = useState('');
@@ -126,12 +131,16 @@ export default function Cart() {
   const cartSettings = (cart && cart.cart_settings) || settings;
   const doc = cart && cart.doc;
 
+  // Cart-level Box Type options must come from the Box Type doctype itself
+  // (search_box_types), not getBoxItems' Item codes — update_cart_box_type
+  // validates against `Box Type`, a different doctype, and throws otherwise.
+  // Empty txt pulls the full (capped) list for a plain <select>.
   useEffect(() => {
     if (!cartSettings || !cartSettings.show_box_type) return;
     let cancelled = false;
-    getBoxItems()
-      .then((rows) => { if (!cancelled) setBoxItems(rows || []); })
-      .catch(() => { if (!cancelled) setBoxItems([]); });
+    searchBoxTypes('', 100)
+      .then((rows) => { if (!cancelled) setBoxTypeOptions(rows || []); })
+      .catch(() => { if (!cancelled) setBoxTypeOptions([]); });
     return () => { cancelled = true; };
   }, [cartSettings && cartSettings.show_box_type]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -145,6 +154,10 @@ export default function Cart() {
     [items]
   );
 
+  // Refresh from get_cart_quotation unconditionally after any mutation
+  // (success or failure) so the client can never diverge from server state —
+  // e.g. removing the last row deletes the parent doc server-side; without
+  // this the removed row would otherwise stay visible in a stale UI.
   async function refreshCart() {
     const data = await loadCart();
     return data;
@@ -152,6 +165,7 @@ export default function Cart() {
 
   async function handleQtyChange(row, qty) {
     setMutatingRow(row.name);
+    setCartBusy(true);
     setRowError(null);
     try {
       const res = await updateCart({
@@ -161,13 +175,22 @@ export default function Cart() {
         custom_length: row.custom_length,
         custom_box_type: row.custom_box_type,
         child_docname: row.name,
+        // Removing a row (qty 0) must rebuild the response via
+        // get_cart_quotation(doc=None) instead of dereferencing the plain
+        // {name: quotation.name, ...} shape — when this is the LAST row,
+        // update_cart deletes the parent Quotation/Sales Order and
+        // `quotation` becomes None, so the non-with_items branch would throw
+        // an AttributeError (500). The with_items branch guards against a
+        // None quotation itself (confirmed by reading cart.py).
+        with_items: qty === 0,
       });
       if (res && res.cart_count != null) setCartCount(res.cart_count);
-      await refreshCart();
     } catch (e) {
       setRowError(String(e));
     } finally {
+      await refreshCart();
       setMutatingRow(null);
+      setCartBusy(false);
     }
   }
 
@@ -177,78 +200,78 @@ export default function Cart() {
 
   async function handleApplyCoupon() {
     if (!couponDraft.trim()) return;
-    setCouponBusy(true);
+    setCartBusy(true);
     setCouponError(null);
     try {
       await applyCouponCode(couponDraft.trim(), referralDraft.trim() || undefined);
       setCouponDraft('');
       setReferralDraft('');
-      await refreshCart();
     } catch (e) {
       setCouponError(String(e));
     } finally {
-      setCouponBusy(false);
+      await refreshCart();
+      setCartBusy(false);
     }
   }
 
   async function handleRemoveCoupon() {
-    setCouponBusy(true);
+    setCartBusy(true);
     setCouponError(null);
     try {
       await removeCouponCode();
-      await refreshCart();
     } catch (e) {
       setCouponError(String(e));
     } finally {
-      setCouponBusy(false);
+      await refreshCart();
+      setCartBusy(false);
     }
   }
 
   async function handleDeliveryPoint(value) {
-    setMutating(true);
+    setCartBusy(true);
     try {
       await updateCartDeliveryPoint(value);
-      await refreshCart();
     } catch (e) {
       setRowError(String(e));
     } finally {
-      setMutating(false);
+      await refreshCart();
+      setCartBusy(false);
     }
   }
 
   async function handleConsignee(value) {
-    setMutating(true);
+    setCartBusy(true);
     try {
       await updateCartConsignee(value);
-      await refreshCart();
     } catch (e) {
       setRowError(String(e));
     } finally {
-      setMutating(false);
+      await refreshCart();
+      setCartBusy(false);
     }
   }
 
   async function handleLineCodeSave() {
-    setMutating(true);
+    setCartBusy(true);
     try {
       await updateCartLineCode(lineCodeDraft);
-      await refreshCart();
     } catch (e) {
       setRowError(String(e));
     } finally {
-      setMutating(false);
+      await refreshCart();
+      setCartBusy(false);
     }
   }
 
   async function handleBoxType(value) {
-    setMutating(true);
+    setCartBusy(true);
     try {
       await updateCartBoxType(value);
-      await refreshCart();
     } catch (e) {
       setRowError(String(e));
     } finally {
-      setMutating(false);
+      await refreshCart();
+      setCartBusy(false);
     }
   }
 
@@ -261,6 +284,7 @@ export default function Cart() {
   // call is required — the two-step "Save Order" → "Submit Order" flow.
   async function handleCheckout() {
     setCheckoutBusy(true);
+    setCartBusy(true);
     setCheckoutError(null);
     try {
       if (cartSettings && cartSettings.enable_checkout) {
@@ -286,6 +310,7 @@ export default function Cart() {
       setCheckoutError(String(e));
     } finally {
       setCheckoutBusy(false);
+      setCartBusy(false);
     }
   }
 
@@ -326,9 +351,11 @@ export default function Cart() {
     );
   }
 
-  if (!doc) return null;
-
-  if (items.length === 0) {
+  // A refreshed cart is never a bare null — get_cart_quotation() always
+  // creates a fresh (possibly empty) Quotation/Sales Order when none exists —
+  // but render the same empty-cart state defensively if it ever comes back
+  // without a doc, so the UI can't get stuck on a blank page.
+  if (!doc || items.length === 0) {
     return (
       <div className="ws-shop ws-cart-page">
         <div className="ws-empty ws-cart-empty">
@@ -369,9 +396,9 @@ export default function Cart() {
           {rowError && <div className="ws-pd-add-result ws-pd-add-result-err" role="alert">{rowError}</div>}
           {items.map((d) => {
             const maxBunches = d._max_stock_bunches || 0;
-            const busy = mutatingRow === d.name;
+            const rowMutating = mutatingRow === d.name;
             return (
-              <div className="ws-cart-row" key={d.name}>
+              <div className={`ws-cart-row${rowMutating ? ' ws-cart-row-mutating' : ''}`} key={d.name}>
                 <div className="ws-cart-row-img">
                   {d.thumbnail || d.website_image ? (
                     <img src={d.thumbnail || d.website_image} alt={d.web_item_name || d.item_name} />
@@ -398,9 +425,9 @@ export default function Cart() {
                     onChange={(v) => handleQtyChange(d, v)}
                     min={1}
                     max={maxBunches > 0 ? maxBunches : undefined}
-                    disabled={busy}
+                    disabled={cartBusy}
                   />
-                  <button className="ws-rail-clear ws-cart-remove" disabled={busy} onClick={() => handleRemove(d)}>
+                  <button className="ws-rail-clear ws-cart-remove" disabled={cartBusy} onClick={() => handleRemove(d)}>
                     Remove
                   </button>
                 </div>
@@ -419,7 +446,7 @@ export default function Cart() {
               {doc.coupon_code ? (
                 <div className="ws-cart-coupon-applied">
                   <span>{doc.coupon_code}</span>
-                  <button className="ws-rail-clear" disabled={couponBusy} onClick={handleRemoveCoupon}>Remove</button>
+                  <button className="ws-rail-clear" disabled={cartBusy} onClick={handleRemoveCoupon}>Remove</button>
                 </div>
               ) : (
                 <>
@@ -428,6 +455,7 @@ export default function Cart() {
                     className="ws-search"
                     placeholder="Coupon code"
                     value={couponDraft}
+                    disabled={cartBusy}
                     onChange={(e) => setCouponDraft(e.target.value)}
                   />
                   <input
@@ -435,10 +463,11 @@ export default function Cart() {
                     className="ws-search"
                     placeholder="Referral code (optional)"
                     value={referralDraft}
+                    disabled={cartBusy}
                     onChange={(e) => setReferralDraft(e.target.value)}
                   />
-                  <button className="ws-page-btn" disabled={couponBusy || !couponDraft.trim()} onClick={handleApplyCoupon}>
-                    {couponBusy ? 'Applying…' : 'Apply'}
+                  <button className="ws-page-btn" disabled={cartBusy || !couponDraft.trim()} onClick={handleApplyCoupon}>
+                    {cartBusy ? 'Please wait…' : 'Apply'}
                   </button>
                 </>
               )}
@@ -454,7 +483,7 @@ export default function Cart() {
                 placeholder="Search delivery points…"
                 search={searchDeliveryPoints}
                 onSelect={handleDeliveryPoint}
-                disabled={mutating}
+                disabled={cartBusy}
               />
             </div>
           )}
@@ -467,7 +496,7 @@ export default function Cart() {
                 placeholder="Search consignees…"
                 search={searchConsignees}
                 onSelect={handleConsignee}
-                disabled={mutating}
+                disabled={cartBusy}
               />
             </div>
           )}
@@ -482,7 +511,7 @@ export default function Cart() {
                   value={lineCodeDraft}
                   onChange={(e) => setLineCodeDraft(e.target.value.toUpperCase())}
                   onBlur={() => { if (lineCodeDraft !== (doc.custom_line_code || '')) handleLineCodeSave(); }}
-                  disabled={mutating}
+                  disabled={cartBusy}
                 />
               </label>
             </div>
@@ -495,12 +524,12 @@ export default function Cart() {
                 <select
                   className="ws-search"
                   value={doc.custom_box_type || ''}
-                  disabled={mutating}
+                  disabled={cartBusy}
                   onChange={(e) => handleBoxType(e.target.value)}
                 >
                   <option value="">No box selected</option>
-                  {boxItems.map((b) => (
-                    <option key={b.name} value={b.name}>{b.item_name || b.name}</option>
+                  {boxTypeOptions.map((b) => (
+                    <option key={b.value} value={b.value}>{b.label || b.value}</option>
                   ))}
                 </select>
               </label>
@@ -536,7 +565,7 @@ export default function Cart() {
 
           {checkoutError && <div className="ws-pd-add-result ws-pd-add-result-err" role="alert">{checkoutError}</div>}
 
-          <button className="ws-btn-gold ws-cart-checkout" disabled={checkoutBusy} onClick={handleCheckout}>
+          <button className="ws-btn-gold ws-cart-checkout" disabled={cartBusy} onClick={handleCheckout}>
             {checkoutBusy ? 'Please wait…' : checkoutLabel}
           </button>
         </aside>
