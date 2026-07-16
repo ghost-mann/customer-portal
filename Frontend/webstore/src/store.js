@@ -72,6 +72,13 @@ export const useStore = create((set, get) => ({
   ui: { cartOpen: false },
   setUi: (patch) => set((s) => ({ ui: { ...s.ui, ...patch } })),
 
+  // Cart badge count. update_cart's response includes cart_count directly
+  // (server comment: more reliable than depending on cookie-set timing), so
+  // Product.jsx's add-to-cart just forwards it here. Guests never populate
+  // this — their add-to-cart stashes + redirects to login instead.
+  cartCount: 0,
+  setCartCount: (n) => set({ cartCount: Number(n) || 0 }),
+
   bootstrap: () => get().runQuery(readInitialQuery(), { resetStart: false, first: true }),
 
   // Applies `patch` onto the current query and re-fetches. Any change other
