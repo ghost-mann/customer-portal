@@ -106,6 +106,17 @@ export const useStore = create((set, get) => ({
 
   clearCart: () => set({ cart: null, cartError: null }),
 
+  // RT6 order confirmation. Cart.jsx snapshots the cart doc (items/totals/
+  // currency) right before navigating to /orders/<name> on a successful
+  // checkout — there is no whitelisted method to re-fetch a placed order's
+  // contents (see lib/api.js getOrderDoc's comment), so this in-memory
+  // snapshot is the primary source for Order.jsx's confirmation view. Only
+  // valid for the single navigation that follows checkout in the same
+  // session (a reload or direct link loses it — Order.jsx falls back to
+  // getOrderDoc, then a minimal confirmation).
+  lastOrder: null,
+  setLastOrder: (order) => set({ lastOrder: order }),
+
   bootstrap: () => get().runQuery(readInitialQuery(), { resetStart: false, first: true }),
 
   // Applies `patch` onto the current query and re-fetches. Any change other

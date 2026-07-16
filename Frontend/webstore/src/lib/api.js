@@ -243,3 +243,69 @@ export const addItemReview = (webItem, title, rating, comment) =>
     rating,
     comment: comment || '',
   });
+
+// ---- Bouquets (RT6) — confirmed by reading
+// apps/upande_webshop/upande_webshop/www/bouquet/index.py +
+// upande_webshop/doctype/bouquet_recipe_item/bouquet_recipe_item.json.
+// A "bouquet" is just a normal published Website Item (its `name` is the
+// `bouquet` value on each Bouquet Recipe Item row embedded in
+// `settings.bouquet_recipes`); the recipe rows (item_group/stem_length/
+// quantity) are informational "what's inside" composition, not a multi-item
+// cart builder — upande_webshop's own /bouquet listing page links each
+// bouquet card straight to that Website Item's own product page, which adds
+// to cart the same way any other product does (one `update_cart` call for
+// the bouquet's own item_code). There is no dedicated whitelisted method for
+// bouquets beyond that — confirmed by grep, no `@frappe.whitelist` in
+// www/bouquet/index.py (it's a Jinja page, not a JSON endpoint) and no other
+// bouquet-specific method anywhere in the app.
+//
+// To render bouquet cards (image/name/route/item_code/price cue) we need the
+// Website Item docs behind each distinct `bouquet` name. `get_product_filter_data`
+// has no "get by name" filter (Website Item's `name` isn't a real DocField so
+// ProductQuery.build_fields_filters' `frappe.get_meta(...).get_field(field)`
+// lookup would return None and throw on a bare `name` filter — confirmed by
+// reading product_data_engine/query.py). So: prefer `item_group` (Webshop
+// Settings' own `bouquets_item_group` field exists for exactly this) when
+// set — a single filtered call; otherwise fall back to paging the full
+// catalogue like getWishlistItems() does, keeping only items whose `name`
+// matches a bouquet in the recipe table.
+export const getBouquetCatalogItems = async (bouquetNames, itemGroup) => {
+  const wanted = new Set(bouquetNames || []);
+  if (wanted.size === 0) return [];
+  if (itemGroup) {
+    const data = await getProductFilterData({ item_group: itemGroup });
+    return (data.items || []).filter((it) => wanted.has(it.name));
+  }
+  const found = [];
+  let start = 0;
+  for (let page = 0; page < 50; page++) {
+    const data = await getProductFilterData({ start, from_filters: false });
+    const items = data.items || [];
+    for (const item of items) if (wanted.has(item.name)) found.push(item);
+    const count = data.items_count || 0;
+    start += items.length;
+    if (items.length === 0 || start >= count || found.length >= wanted.size) break;
+  }
+  return found;
+};
+
+// ---- Orders / confirmation (RT6) — there is NO whitelisted JSON method in
+// upande_webshop (or anywhere else grepped) that returns a placed order's
+// contents. The only order VIEW that exists is the server-rendered Jinja
+// page at templates/pages/order.py + order.html, reached via erpnext's own
+// `website_route_rules` (`/orders/<name>` -> doctype "Sales Order",
+// `/quotations/<name>` -> doctype "Quotation" — confirmed by reading
+// apps/erpnext/erpnext/hooks.py), which gates with
+// `frappe.has_website_permission(doc)` — a portal-specific permission check,
+// NOT the desk role/User-Permission check `frappe.client.get` uses. So
+// `frappe.client.get` is attempted here as a best-effort (works when the
+// portal customer's user also carries ordinary desk read-permission on Sales
+// Order/Quotation, e.g. via a "Customer" role + linked User Permission — a
+// common but not guaranteed setup) and is expected to 403 otherwise; callers
+// MUST have a fallback for that (see pages/Order.jsx, which prefers an
+// in-memory snapshot captured at checkout and only calls this as a second
+// attempt). `frappe.client.get` itself is `@frappe.whitelist()` with no
+// allow_guest (confirmed live: guest call -> "Function ... is not
+// whitelisted", the same guest-vs-whitelisted shape as wishlist/reviews).
+export const getOrderDoc = (doctype, name) =>
+  api('frappe.client.get', { doctype, name });

@@ -99,6 +99,7 @@ export default function Cart() {
   const cartError = useStore((s) => s.cartError);
   const loadCart = useStore((s) => s.loadCart);
   const setCartCount = useStore((s) => s.setCartCount);
+  const setLastOrder = useStore((s) => s.setLastOrder);
 
   const [boxTypeOptions, setBoxTypeOptions] = useState([]);
   const [mutatingRow, setMutatingRow] = useState(null); // child docname in flight (per-row spinner only)
@@ -287,15 +288,24 @@ export default function Cart() {
     setCartBusy(true);
     setCheckoutError(null);
     try {
+      // Snapshot the about-to-be-submitted cart (items/totals/currency) so
+      // Order.jsx can render a confirmation without needing to re-fetch the
+      // placed order — there is no whitelisted method that does that (see
+      // lib/api.js getOrderDoc's comment). Captures the same `doc`/`currency`
+      // this render already computed from the last get_cart_quotation() load.
+      const snapshot = (name) => setLastOrder({ name, doc, currency, showPrice: Boolean(cartSettings && cartSettings.show_price) });
+
       if (cartSettings && cartSettings.enable_checkout) {
         const res = await placeOrder();
         if (res && typeof res === 'object' && res.error) { setCheckoutError(res.error); return; }
+        snapshot(res);
         navigate(`/orders/${res}`);
         return;
       }
       if (checkoutStep === 'saved') {
         const res = await submitCartOrder();
         if (res && typeof res === 'object' && res.error) { setCheckoutError(res.error); return; }
+        snapshot(res);
         navigate(`/orders/${res}`);
         return;
       }
@@ -305,6 +315,7 @@ export default function Cart() {
         setCheckoutStep('saved');
         return;
       }
+      snapshot(res);
       navigate(`/orders/${res}`);
     } catch (e) {
       setCheckoutError(String(e));

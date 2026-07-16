@@ -303,6 +303,39 @@ button{font-family:inherit;cursor:pointer;}
 .ws-star-btn:disabled{opacity:0.5;}
 .ws-review-textarea{height:auto;padding:10px 14px;resize:vertical;font-family:inherit;}
 
+/* ── Bouquets (RT6) ── */
+.ws-bouquet-grid{margin-top:8px;}
+.ws-bouquet-detail{display:flex;flex-direction:column;gap:18px;margin-top:8px;}
+.ws-bouquet-composer{display:grid;grid-template-columns:minmax(0,340px) 1fr;gap:40px;align-items:start;}
+.ws-bouquet-composer-media{aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:var(--gold-soft);
+  display:flex;align-items:center;justify-content:center;}
+.ws-bouquet-composer-media img{width:100%;height:100%;object-fit:cover;}
+.ws-bouquet-composer-media .material-symbols-outlined{font-size:80px;color:var(--gold);}
+.ws-bouquet-composer-body{display:flex;flex-direction:column;gap:6px;min-width:0;}
+.ws-bouquet-recipe{margin:18px 0;display:flex;flex-direction:column;gap:10px;}
+.ws-bouquet-recipe-table{width:100%;border-collapse:collapse;font-size:13.5px;}
+.ws-bouquet-recipe-table th{text-align:left;color:var(--muted);font-weight:600;font-size:11.5px;
+  text-transform:uppercase;letter-spacing:0.05em;padding:6px 10px 6px 0;border-bottom:1px solid var(--line);}
+.ws-bouquet-recipe-table td{padding:8px 10px 8px 0;border-bottom:1px solid var(--line);}
+.ws-bouquet-recipe-total{color:var(--muted);font-size:12.5px;}
+
+@media(max-width:860px){
+  .ws-bouquet-composer{grid-template-columns:1fr;}
+  .ws-bouquet-composer-media{max-width:340px;}
+}
+
+/* ── Order confirmation (RT6) ── */
+.ws-order-page{padding-top:32px;padding-bottom:64px;display:flex;flex-direction:column;gap:24px;}
+.ws-order-confirm-banner{display:flex;align-items:center;gap:16px;background:var(--good-soft);
+  color:var(--good);border-radius:14px;padding:20px 24px;}
+.ws-order-confirm-banner .material-symbols-outlined{font-size:36px;}
+.ws-order-confirm-banner h1{color:var(--ink);}
+.ws-order-confirm-banner p{color:var(--muted);margin-top:4px;}
+.ws-order-items{display:flex;flex-direction:column;gap:12px;}
+.ws-order-row-compact{grid-template-columns:1fr auto;}
+.ws-order-totals{align-self:flex-end;min-width:280px;}
+.ws-order-fallback-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
+
 @media(max-width:640px){
   .ws-pd-title-row{flex-wrap:wrap;}
 }
