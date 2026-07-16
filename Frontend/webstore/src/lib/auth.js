@@ -1,7 +1,5 @@
-import { getBoot } from '@shared/api';
-
 export function isLoggedIn() {
-  return !!(getBoot?.().logged_in ?? window.logged_in);
+  return !!window.logged_in;
 }
 
 export function requireLogin(returnTo = window.location.pathname) {

@@ -29,7 +29,7 @@ export function useRoute() {
     const full = path.startsWith(BASE) ? path : `${BASE}${path.startsWith('/') ? '' : '/'}${path}`;
     if (full === window.location.pathname) return;
     window.history.pushState({}, '', full);
-    setRoute(pathToRoute(full));
+    window.dispatchEvent(new PopStateEvent('popstate'));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   return { ...route, navigate };
