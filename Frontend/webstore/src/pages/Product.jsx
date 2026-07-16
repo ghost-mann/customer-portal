@@ -163,7 +163,12 @@ export default function Product() {
             )}
           </div>
 
-          <PriceBlock settings={settings} productInfo={productInfo} loading={infoLoading} />
+          <PriceBlock
+            settings={settings}
+            productInfo={productInfo}
+            loading={infoLoading}
+            awaitingVariant={variantGated && !resolvedItemCode}
+          />
 
           {(product.web_long_description || product.short_description) && (
             <div

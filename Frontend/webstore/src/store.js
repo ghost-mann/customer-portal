@@ -47,6 +47,19 @@ function readWishCountCookie() {
   return match ? Number(match[1]) : null;
 }
 
+// Same idea for the cart badge: upande_webshop's set_cart_count() (shopping_
+// cart/cart.py) sets a plain `cart_count` cookie (str(cint(total_qty))) on
+// every cart mutation and on login (hooks.py's on_session_creation ->
+// shopping_cart.utils.set_cart_count), and clears it on logout/empty cart —
+// confirmed by grep, same cookie_manager.set_cookie(name, str(count)) shape
+// as wish_count above. Reading it on boot means the Nav badge is correct on
+// first paint instead of sitting at 0 until the shopper visits /cart.
+function readCartCountCookie() {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/(?:^|; )cart_count=(\d+)/);
+  return match ? Number(match[1]) : null;
+}
+
 function syncUrl(query) {
   if (typeof window === 'undefined') return;
   const params = new URLSearchParams(window.location.search);
@@ -86,7 +99,7 @@ export const useStore = create((set, get) => ({
   // (server comment: more reliable than depending on cookie-set timing), so
   // Product.jsx's add-to-cart just forwards it here. Guests never populate
   // this — their add-to-cart stashes + redirects to login instead.
-  cartCount: 0,
+  cartCount: readCartCountCookie() || 0,
   setCartCount: (n) => set({ cartCount: Number(n) || 0 }),
 
   // Wishlist badge count (Nav, RT7). There is no whitelisted "count my

@@ -173,7 +173,8 @@ button{font-family:inherit;cursor:pointer;}
 
 /* ── Product card ── */
 .ws-card{display:flex;flex-direction:column;text-align:left;background:var(--surface);
-  border:1px solid var(--line);border-radius:16px;overflow:hidden;padding:0;transition:box-shadow .18s, transform .18s;}
+  border:1px solid var(--line);border-radius:16px;overflow:hidden;padding:0;cursor:pointer;
+  transition:box-shadow .18s, transform .18s;}
 .ws-card:hover{box-shadow:0 12px 34px rgba(0,0,0,0.10);transform:translateY(-2px);}
 .ws-card-img{position:relative;aspect-ratio:4/5;background:var(--gold-soft);overflow:hidden;
   display:flex;align-items:center;justify-content:center;}

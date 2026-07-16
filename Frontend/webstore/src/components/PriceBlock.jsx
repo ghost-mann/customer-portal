@@ -2,7 +2,13 @@
 // `product_info`, gated by the embedded Webshop Settings — mirrors the
 // server's own show/hide logic (product_info.py) so the client never shows
 // something the API already decided to withhold.
-export default function PriceBlock({ settings, productInfo, loading }) {
+//
+// `awaitingVariant` covers the has_variants case: the template item_code has
+// no price of its own, so until the shopper resolves a concrete variant (via
+// StemLengthSelector) `productInfo` is legitimately null/empty — that's not
+// "no price configured" (Price on request), it's "haven't asked yet", so it
+// gets its own neutral copy instead.
+export default function PriceBlock({ settings, productInfo, loading, awaitingVariant }) {
   if (!settings) return null;
 
   const price = productInfo && productInfo.price;
@@ -38,6 +44,8 @@ export default function PriceBlock({ settings, productInfo, loading }) {
       {!loading && priceIsShowable && !guestPriceHidden && (
         price && price.formatted_price ? (
           <div className="ws-pd-price">{price.formatted_price}</div>
+        ) : awaitingVariant ? (
+          <div className="ws-pd-price-muted">Select an option to see price</div>
         ) : (
           <div className="ws-pd-price-muted">Price on request</div>
         )

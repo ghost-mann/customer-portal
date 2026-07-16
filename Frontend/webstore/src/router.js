@@ -15,7 +15,6 @@ export function pathToRoute(pathname) {
   if (seg[0] === 'cart') return { page: 'cart', params: {} };
   if (seg[0] === 'wishlist') return { page: 'wishlist', params: {} };
   if (seg[0] === 'bouquets') return { page: 'bouquets', params: {} };
-  if (seg[0] === 'checkout') return { page: 'checkout', params: {} };
   if (seg[0] === 'orders') return { page: 'confirmation', params: { name: seg[1] } };
   return { page: 'shop', params: {} };
 }
