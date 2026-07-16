@@ -5,13 +5,19 @@ app_description = "Farm management platform for Upande client farms"
 app_email = "support@upande.com"
 app_license = "mit"
 
-# All public marketing routes serve the same React SPA shell from
-# customer_portal/www/home.html. The React app reads window.location.pathname
-# to pick which page component to render.
+# Public marketing routes share home.html. The Upande Webstore SPA subpaths all
+# render the one upande-webstore.html template; the React app reads
+# window.location.pathname to pick the page.
 website_route_rules = [
 	{"from_route": "/about",     "to_route": "home"},
 	{"from_route": "/varieties", "to_route": "home"},
 	{"from_route": "/contact",   "to_route": "home"},
+	{"from_route": "/upande-webstore/<path:app_path>", "to_route": "upande-webstore"},
+]
+
+# The B2B /website-shop was retired and replaced by the public /upande-webstore.
+website_redirects = [
+	{"source": "/website-shop", "target": "/upande-webstore"},
 ]
 
 # When a credit note (Sales Invoice with is_return=1) is submitted/cancelled,
