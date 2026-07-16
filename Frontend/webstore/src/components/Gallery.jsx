@@ -1,3 +1,5 @@
+import ProductImage from './ProductImage';
+
 // Product-detail image. Website Item's `slideshow` field (a Website
 // Slideshow doc, rendered server-side by templates/generators/item/item_image.html)
 // isn't exposed by any guest-safe whitelisted method, and Website Item itself
@@ -8,13 +10,16 @@
 export default function Gallery({ image, alt }) {
   return (
     <div className="ws-pd-gallery">
-      {image ? (
-        <img src={image} alt={alt || ''} className="ws-pd-image" />
-      ) : (
-        <div className="ws-pd-image-ph" aria-hidden="true">
-          <span className="material-symbols-outlined">local_florist</span>
-        </div>
-      )}
+      <ProductImage
+        src={image}
+        alt={alt || ''}
+        className="ws-pd-image"
+        placeholder={
+          <div className="ws-pd-image-ph" aria-hidden="true">
+            <span className="material-symbols-outlined">local_florist</span>
+          </div>
+        }
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRoute } from '../router';
 import { useStore } from '../store';
+import ProductImage from '../components/ProductImage';
 import {
   getWishlistItems,
   removeFromWishlist,
@@ -184,9 +185,11 @@ export default function Wishlist() {
             <div className="ws-card ws-wish-card" key={item.item_code}>
               <button className="ws-wish-card-link" onClick={() => navigate(`/p/${item.route}`)}>
                 <div className="ws-card-img">
-                  {item.website_image
-                    ? <img src={item.website_image} alt={item.web_item_name} loading="lazy" />
-                    : <span aria-hidden="true" className="material-symbols-outlined ws-card-ph">local_florist</span>}
+                  <ProductImage
+                    src={item.website_image}
+                    alt={item.web_item_name}
+                    placeholder={<span aria-hidden="true" className="material-symbols-outlined ws-card-ph">local_florist</span>}
+                  />
                   {(item.on_backorder || item.in_stock === false) && (
                     <span className="ws-badge ws-badge-muted">{item.on_backorder ? 'Backorder' : 'Sold out'}</span>
                   )}
