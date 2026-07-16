@@ -24,6 +24,11 @@
   --accent-2:#a9863b;
   --accent-soft:#f3ebd7;
   --accent-warm:#c8a24c;
+  /* Readable "gold text" token: deep bronze, meets AA (4.5:1) for text on
+   * both white (#ffffff) and --accent-soft (#f3ebd7). Use for gold-colored
+   * TEXT on light surfaces; do not use for gold BACKGROUND fills (those
+   * keep --accent / --accent-2 with ink text, which already passes). */
+  --accent-text:#6a5214;
 
   --good:#276a35;
   --good-soft:#e9f3ea;
@@ -113,11 +118,11 @@ button{font-family:inherit;}
   transition:background 0.12s, color 0.12s;
 }
 .nav-item:hover{background:var(--hover);color:var(--text);}
-.nav-item.active{background:var(--accent-soft);color:var(--accent-2);font-weight:500;}
+.nav-item.active{background:var(--accent-soft);color:var(--accent-text);font-weight:500;}
 .nav-item .material-symbols-outlined{
   font-size:18px;flex-shrink:0;color:var(--text-3);
 }
-.nav-item.active .material-symbols-outlined{color:var(--accent);}
+.nav-item.active .material-symbols-outlined{color:var(--accent-text);}
 .nav-cnt{
   margin-left:auto;font-family:var(--mono);font-size:10.5px;
   color:var(--text-3);font-weight:500;
@@ -244,7 +249,7 @@ button{font-family:inherit;}
 .bdg-bad{background:var(--bad-soft);color:var(--bad);}
 .bdg-info{background:var(--info-soft);color:var(--info);}
 .bdg-other{background:var(--surface-3);color:var(--text-2);}
-.bdg-accent{background:var(--accent-soft);color:var(--accent-2);}
+.bdg-accent{background:var(--accent-soft);color:var(--accent-text);}
 
 /* ============ BUTTONS ============ */
 .btn{
@@ -306,7 +311,7 @@ textarea.fc{resize:vertical;min-height:80px;line-height:1.55;font-family:var(--f
 .sn-circle.done{background:var(--accent);color:var(--text);}
 .sn-circle.active{background:var(--accent);color:var(--text);box-shadow:0 0 0 3px var(--accent-soft);}
 .sn-circle.pending{background:var(--surface);color:var(--text-3);border:1px solid var(--border);}
-.sn-label.active{color:var(--accent-2);font-weight:600;}
+.sn-label.active{color:var(--accent-text);font-weight:600;}
 .sn-label.done{color:var(--text);}
 .sn-label.pending{color:var(--text-3);}
 
@@ -359,7 +364,7 @@ textarea.fc{resize:vertical;min-height:80px;line-height:1.55;font-family:var(--f
   cursor:pointer;transition:all 0.12s;margin-top:6px;
   display:inline-flex;align-items:center;justify-content:center;gap:6px;
 }
-.add-line-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft);}
+.add-line-btn:hover{border-color:var(--accent);color:var(--accent-text);background:var(--accent-soft);}
 .add-line-btn .material-symbols-outlined{font-size:16px;}
 
 /* ============ ALERTS ============ */
@@ -540,9 +545,9 @@ textarea.fc{resize:vertical;min-height:80px;line-height:1.55;font-family:var(--f
   color:#fff;font-weight:600;font-size:13px;
 }
 .acct-name{font-size:14.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.acct-id{font-family:var(--mono);font-size:10.5px;color:var(--accent);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.acct-id{font-family:var(--mono);font-size:10.5px;color:var(--accent-text);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .acct-go{
-  margin-left:auto;color:var(--accent);font-size:18px;flex-shrink:0;
+  margin-left:auto;color:var(--accent-text);font-size:18px;flex-shrink:0;
   opacity:0;transform:translateX(-4px);transition:opacity .15s, transform .15s;
 }
 .acct-meta{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 0;min-height:14px;}
@@ -564,7 +569,7 @@ textarea.fc{resize:vertical;min-height:80px;line-height:1.55;font-family:var(--f
   display:inline-flex;align-items:center;gap:4px;
   padding:3px 8px;border-radius:6px;text-decoration:none;
   background:var(--surface-2);border:1px solid var(--border);
-  color:var(--accent-2);font-size:12px;transition:all .12s;
+  color:var(--accent-text);font-size:12px;transition:all .12s;
 }
 .cn-link:hover{border-color:var(--accent);background:var(--accent-soft);}
 .cn-link .material-symbols-outlined{font-size:13px;}

@@ -46,7 +46,7 @@ export default function Account() {
             </div>
           ) : (
             <div style={{ fontSize: 13, color: 'var(--text-3)' }}>
-              No account manager assigned yet. Reach us at <a href="mailto:sales@upande.com" style={{ color: 'var(--accent)' }}>sales@upande.com</a>.
+              No account manager assigned yet. Reach us at <a href="mailto:sales@upande.com" style={{ color: 'var(--accent-text)' }}>sales@upande.com</a>.
             </div>
           )}
         </Card>

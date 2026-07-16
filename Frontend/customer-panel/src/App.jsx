@@ -98,7 +98,7 @@ export default function App() {
           padding: '7px 24px',
           fontFamily: 'var(--mono)',
           fontSize: 11,
-          color: 'var(--accent-2)',
+          color: 'var(--accent-text)',
           textTransform: 'uppercase',
           letterSpacing: '0.1em',
           display: 'flex',
@@ -111,7 +111,7 @@ export default function App() {
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
               background: 'transparent', border: '1px solid var(--border-2)', borderRadius: 6,
-              color: 'var(--accent-2)', cursor: 'pointer', padding: '3px 9px',
+              color: 'var(--accent-text)', cursor: 'pointer', padding: '3px 9px',
               fontFamily: 'var(--mono)', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.1em',
             }}
           >
