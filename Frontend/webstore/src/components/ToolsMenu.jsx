@@ -44,15 +44,14 @@ export default function ToolsMenu({ onClearFilters }) {
 
       {open && (
         <div className="ws-tools-menu" role="menu">
-          <button
-            type="button"
+          <a
             role="menuitem"
             className="ws-tools-menu-item"
-            onClick={() => { window.location.href = '/app'; }}
+            href="/app"
           >
             <span className="material-symbols-outlined" aria-hidden="true">dashboard</span>
             Back to Desk
-          </button>
+          </a>
           <a role="menuitem" className="ws-tools-menu-item" href={portalHref}>
             <span className="material-symbols-outlined" aria-hidden="true">account_circle</span>
             Customer Portal

@@ -123,7 +123,7 @@ export default function Shop() {
         <div className="ws-shop-toolbar">
           <Breadcrumb
             category={category}
-            onHomeClick={() => navigate('/')}
+            onHomeClick={() => { clearFilters(); navigate('/'); }}
             onShopClick={() => setItemGroup('')}
           />
           <div className="ws-toolbar-actions">

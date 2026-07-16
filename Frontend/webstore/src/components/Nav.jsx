@@ -44,17 +44,18 @@ export default function Nav() {
       <div className="ws-brand">
         {/* The logo image is a real link to the Frappe Desk — a full
            navigation (not the SPA router), since /app is a different
-           application entirely. The wordmark stays a router link back to
-           the storefront home, so both destinations remain reachable from
-           the same brand lockup. */}
-        <button
-          type="button"
+           application entirely. It's a plain anchor (not onClick+
+           window.location.href) so middle-click, Ctrl/Cmd-click, and
+           "copy link" all work as expected. The wordmark stays a router
+           link back to the storefront home, so both destinations remain
+           reachable from the same brand lockup. */}
+        <a
           className="ws-brand-logo-btn"
-          onClick={() => { window.location.href = '/app'; }}
+          href="/app"
           aria-label="Open Desk"
         >
           <img className="ws-brand-logo" src="/assets/upande_webshop/images/UpandeLogo.png" alt="Upande" />
-        </button>
+        </a>
         <button type="button" className="ws-brand-name-btn" onClick={() => go('/')}>
           <span className="ws-brand-name">{brand.name}</span>
         </button>
