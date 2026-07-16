@@ -20,6 +20,7 @@ export default function Wishlist() {
   const settings = useStore((s) => s.settings);
   const setCartCount = useStore((s) => s.setCartCount);
   const setItemWished = useStore((s) => s.setItemWished);
+  const setWishlistCount = useStore((s) => s.setWishlistCount);
 
   const loggedIn = Boolean(window.logged_in);
   const enableWishlist = Boolean(settings && settings.enable_wishlist);
@@ -49,7 +50,8 @@ export default function Wishlist() {
   async function handleRemove(item) {
     setBusyCode(item.item_code);
     try {
-      await removeFromWishlist(item.item_code);
+      const res = await removeFromWishlist(item.item_code);
+      setWishlistCount(res && res.wish_count);
       setItemWished(item.item_code, false);
       setItems((prev) => (prev || []).filter((i) => i.item_code !== item.item_code));
     } catch (e) {
@@ -79,7 +81,8 @@ export default function Wishlist() {
       setCartCount(res && res.cart_count);
 
       try {
-        await removeFromWishlist(item.item_code);
+        const rmv = await removeFromWishlist(item.item_code);
+        setWishlistCount(rmv && rmv.wish_count);
         setItemWished(item.item_code, false);
       } catch (removeErr) {
         // Added to cart already succeeded; a failed wishlist-removal is a
