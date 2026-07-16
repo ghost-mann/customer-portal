@@ -133,8 +133,10 @@ def get_context(context):
 
 **Files:** `components/{Nav,Footer}.jsx`, `styles.css`, empty/error/loading states.
 
-- [ ] Nav links mirror the structure (Shop, Bouquet, Wishlist, Cart with live count from store; account/login via guest redirect; orders when logged in). Footer stays Upande. Responsive pass; empty/error/loading for every data surface; a11y (`aria-hidden` on icon spans; accessible cart label). Tokenize any remaining `rgba()` literals so per-farm `brand.js` reskin holds (add `--ink-rgb`/`--paper-rgb` or use color-mix).
-- [ ] Verify: build green; load each route live; responsive check.
+- [ ] Nav links mirror the structure (Shop, Bouquet, Wishlist, Cart with live count from store; orders when logged in). Footer stays Upande. Responsive pass; empty/error/loading for every data surface; a11y (`aria-hidden` on icon spans; accessible cart label). Tokenize any remaining `rgba()` literals so per-farm `brand.js` reskin holds (add `--ink-rgb`/`--paper-rgb` or use color-mix).
+- [ ] **Top-right "Customer Portal" option (user requirement):** the webstore Nav's top-right shows a clear "Customer Portal" action → `/customer-portal` for logged-in users, and `/login?redirect-to=/customer-portal` for guests. (Replaces/augments the current generic account link; use `get_guest_redirect_on_action()` where appropriate and drop the dead `window.webshop_settings` reference in `lib/auth.js`.)
+- [ ] **Ecommerce store = main landing page (user requirement):** make the storefront the site's primary landing. Implement by pointing the root at the webstore in the least-destructive way — e.g. `website_route_rules`/`website_redirects` so `/` serves (or redirects to) `/upande-webstore` — WITHOUT deleting the existing marketing `site` area (its `/about`,`/varieties`,`/contact` routes stay reachable). Verify `/` lands on the storefront and the top-right Customer Portal link reaches `/customer-portal`. Flag the exact root behavior (serve vs 301) in the report for user confirmation.
+- [ ] Verify: build green; load each route live (incl. `/` → storefront and Customer Portal link); responsive check.
 - [ ] Commit.
 
 ---
