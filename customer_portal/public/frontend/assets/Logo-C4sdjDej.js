@@ -1,0 +1,1 @@
+import{r as n,j as t}from"./base-Cr1GUJJm.js";const a="/assets/customer_portal/logo.png";function c({fallback:o="MF",alt:r="Mona Flowers"}){const[s,e]=n.useState(!0);return s?t.jsx("img",{src:a,alt:r,onError:()=>e(!1),style:{width:"100%",height:"100%",objectFit:"contain"}}):t.jsx(t.Fragment,{children:o})}export{c as L};

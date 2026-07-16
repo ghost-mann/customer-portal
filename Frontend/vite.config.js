@@ -11,7 +11,7 @@ import proxyOptions from './proxyOptions.js';
 // assets/ dir, served by Frappe at /assets/customer_portal/frontend/. The four
 // existing routes (/, /portal, /website-shop, /customer-portal) are preserved
 // by scripts/build-html.mjs, which writes the four www templates.
-const AREAS = ['portal', 'site', 'webshop', 'customer-panel'];
+const AREAS = ['portal', 'site', 'webstore', 'customer-panel'];
 
 export default defineConfig({
   plugins: [react()],

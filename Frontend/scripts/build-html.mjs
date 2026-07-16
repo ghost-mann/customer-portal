@@ -19,7 +19,7 @@ const WWW   = path.resolve(ROOT, '../customer_portal/www');
 const ROUTES = {
   portal:           'portal.html',
   site:             'home.html',
-  webshop:          'website-shop.html',
+  webstore:         'upande-webstore.html',
   'customer-panel': 'customer-portal.html',
 };
 
