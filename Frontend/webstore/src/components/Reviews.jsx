@@ -49,6 +49,10 @@ export default function Reviews({ webItem }) {
   }, [webItem, loggedIn]);
 
   const reviews = (data && data.reviews) || [];
+  // TODO: `reviews` only holds the current page (get_item_reviews paginates),
+  // so this only detects an existing review on page 1 — a review on a later
+  // page won't suppress the form. Needs a dedicated "has this user reviewed"
+  // check (or fetch across all pages) to be fully correct.
   const alreadyReviewed = window.frappe_user && reviews.some((r) => r.user === window.frappe_user);
 
   async function goSignIn() {

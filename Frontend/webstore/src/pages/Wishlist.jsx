@@ -63,6 +63,13 @@ export default function Wishlist() {
   // must pick a length/attribute first (mirrors upande_webshop's own
   // wishlist.html + set_variant_flag in templates/pages/wishlist.py) — so
   // those route to the product page instead of calling update_cart directly.
+  // The cart-add is the half that must be authoritative: once updateCart
+  // succeeds the item really is in the cart, so we report success and only
+  // *attempt* the wishlist-removal as cleanup. If that cleanup throws, the
+  // move still succeeded (don't tell the user it failed — that invited a
+  // duplicate add on retry); we just note the wishlist wasn't cleared. The
+  // wishlist is always reloaded from the server in `finally` so the UI never
+  // drifts from real state, regardless of which half failed.
   async function handleMoveToCart(item) {
     if (item.has_variants) { navigate(`/p/${item.route}`); return; }
     setBusyCode(item.item_code);
@@ -70,14 +77,26 @@ export default function Wishlist() {
     try {
       const res = await updateCart({ item_code: item.item_code, qty: 1 });
       setCartCount(res && res.cart_count);
-      await removeFromWishlist(item.item_code);
-      setItemWished(item.item_code, false);
-      setItems((prev) => (prev || []).filter((i) => i.item_code !== item.item_code));
+
+      try {
+        await removeFromWishlist(item.item_code);
+        setItemWished(item.item_code, false);
+      } catch (removeErr) {
+        // Added to cart already succeeded; a failed wishlist-removal is a
+        // soft note, not a failure of the overall action.
+        setMoveResult({
+          ok: true,
+          message: `Added "${item.web_item_name}" to your cart. (Couldn't remove it from your wishlist — it may still show here.)`,
+        });
+        return;
+      }
+
       setMoveResult({ ok: true, message: `Added "${item.web_item_name}" to your cart.` });
     } catch (e) {
       setMoveResult({ ok: false, message: String(e) });
     } finally {
       setBusyCode(null);
+      await load();
     }
   }
 

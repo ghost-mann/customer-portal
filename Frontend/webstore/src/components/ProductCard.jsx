@@ -25,6 +25,11 @@ export default function ProductCard({ product }) {
           ? <img src={product.website_image} alt={product.web_item_name} loading="lazy" />
           : <span aria-hidden="true" className="material-symbols-outlined ws-card-ph">local_florist</span>}
         {enableWishlist && (
+          // TODO: WishlistButton renders a <button>, nested inside this
+          // component's own outer <button> — invalid HTML (interactive
+          // content can't nest) and a11y/click-target hazard. Needs the card
+          // to become a non-button wrapper (e.g. div + onClick) or the
+          // wishlist control hoisted outside the button boundary.
           <WishlistButton
             itemCode={product.item_code}
             wished={product.wished}
