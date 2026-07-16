@@ -9,8 +9,8 @@ function Stars({ value }) {
   return (
     <span className="ws-stars" aria-hidden="true">
       {[1, 2, 3, 4, 5].map((i) => (
-        <span key={i} className="material-symbols-outlined ws-star">
-          {i <= rounded ? 'star' : 'star_border'}
+        <span key={i} className={`material-symbols-outlined ws-star ws-star-${i <= rounded ? 'on' : 'off'}`}>
+          star
         </span>
       ))}
     </span>

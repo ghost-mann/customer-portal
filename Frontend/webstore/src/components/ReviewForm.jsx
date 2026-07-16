@@ -51,8 +51,8 @@ export default function ReviewForm({ webItem, onSubmitted }) {
             onClick={() => setRating(i)}
             disabled={busy}
           >
-            <span aria-hidden="true" className="material-symbols-outlined ws-star">
-              {shownRating >= i ? 'star' : 'star_border'}
+            <span aria-hidden="true" className={`material-symbols-outlined ws-star ws-star-${shownRating >= i ? 'on' : 'off'}`}>
+              star
             </span>
           </button>
         ))}
