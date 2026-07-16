@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { getProductFilterData } from './lib/api';
+import { getProductFilterData, getCart } from './lib/api';
 
 // The full, addressable query shape `get_product_filter_data` accepts
 // (confirmed live via curl against upande_webshop.upande_webshop.api —
@@ -78,6 +78,33 @@ export const useStore = create((set, get) => ({
   // this — their add-to-cart stashes + redirects to login instead.
   cartCount: 0,
   setCartCount: (n) => set({ cartCount: Number(n) || 0 }),
+
+  // RT4 cart slice. `cart` is the raw get_cart_quotation() response
+  // ({ doc, shipping_addresses, billing_addresses, shipping_rules, cart_settings }).
+  // NOT allow_guest (confirmed by grep) — only ever called from Cart.jsx after
+  // its own window.logged_in guard, never for a guest session.
+  cart: null,
+  cartLoading: false,
+  cartError: null,
+
+  loadCart: async () => {
+    set({ cartLoading: true, cartError: null });
+    try {
+      const data = await getCart();
+      const totalQty = data && data.doc && data.doc.total_qty;
+      set({
+        cart: data,
+        cartLoading: false,
+        ...(totalQty != null ? { cartCount: Number(totalQty) || 0 } : {}),
+      });
+      return data;
+    } catch (e) {
+      set({ cartError: String(e), cartLoading: false });
+      return null;
+    }
+  },
+
+  clearCart: () => set({ cart: null, cartError: null }),
 
   bootstrap: () => get().runQuery(readInitialQuery(), { resetStart: false, first: true }),
 

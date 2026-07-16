@@ -5,6 +5,7 @@ import Nav from './components/Nav';
 import Footer from './components/Footer';
 import Shop from './pages/Shop';
 import Product from './pages/Product';
+import Cart from './pages/Cart';
 
 export default function App() {
   const { loading, error, bootstrap } = useStore();
@@ -20,7 +21,8 @@ export default function App() {
         {error && <div className="boot">Could not load the shop: {error}</div>}
         {!loading && !error && page === 'shop' && <Shop />}
         {!loading && !error && page === 'product' && <Product />}
-        {!loading && !error && page !== 'shop' && page !== 'product' && (
+        {!loading && !error && page === 'cart' && <Cart />}
+        {!loading && !error && page !== 'shop' && page !== 'product' && page !== 'cart' && (
           <div className="boot"><h1>Coming soon</h1><p>The “{page}” page ships in a later phase.</p></div>
         )}
       </main>

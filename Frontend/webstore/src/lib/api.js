@@ -20,6 +20,9 @@ export const getProductInfo = (itemCode) =>
     skip_quotation_creation: true,
   });
 
+// -> { doc: <decorated Quotation|Sales Order>, shipping_addresses, billing_addresses,
+//      shipping_rules, cart_settings }. NOT allow_guest (confirmed via grep) — 403s
+// for a guest session. Cart.jsx never calls this for a guest (see its early return).
 export const getCart = () =>
   api('upande_webshop.upande_webshop.shopping_cart.cart.get_cart_quotation');
 
@@ -27,6 +30,82 @@ export const getCart = () =>
 // through stashPendingCart() + a login redirect instead (see Product.jsx).
 export const updateCart = (args = {}) =>
   api('upande_webshop.upande_webshop.shopping_cart.cart.update_cart', args);
+
+// ---- Cart mutations below — all `@frappe.whitelist()` (login-required)
+// except apply_coupon_code/remove_coupon_code (allow_guest=True, confirmed by
+// grep), wired here only for a logged-in cart (see Cart.jsx's guest gate).
+
+// -> the (undecorated) cart doc. Confirmed allow_guest=True in cart.py.
+export const applyCouponCode = (appliedCode, appliedReferralSalesPartner) =>
+  api('upande_webshop.upande_webshop.shopping_cart.cart.apply_coupon_code', {
+    applied_code: appliedCode,
+    applied_referral_sales_partner: appliedReferralSalesPartner || '',
+  });
+
+export const removeCouponCode = () =>
+  api('upande_webshop.upande_webshop.shopping_cart.cart.remove_coupon_code');
+
+// Guest-safe Link-style search (ignores permissions server-side) -> [{value, label, description}]
+export const searchDeliveryPoints = (txt, limit = 20) =>
+  api('upande_webshop.upande_webshop.shopping_cart.cart.search_delivery_points', {
+    txt: txt || '', limit,
+  });
+
+// -> { name, delivery_point }
+export const updateCartDeliveryPoint = (deliveryPoint) =>
+  api('upande_webshop.upande_webshop.shopping_cart.cart.update_cart_delivery_point', {
+    delivery_point: deliveryPoint || '',
+  });
+
+// Consignee mirrors Delivery Point (search_consignees/update_cart_consignee).
+// Not in the RT4 plan's literal method list, but wired in addition: on this
+// site `custom_consignee` exists on the cart doctype and
+// `_check_required_cart_fields` requires it unconditionally whenever the field
+// exists (it does NOT gate on the `show_consignee` display setting) — so
+// checkout cannot succeed without this, confirmed by reading cart.py directly.
+export const searchConsignees = (txt, limit = 20) =>
+  api('upande_webshop.upande_webshop.shopping_cart.cart.search_consignees', {
+    txt: txt || '', limit,
+  });
+
+// -> { name, consignee }
+export const updateCartConsignee = (consignee) =>
+  api('upande_webshop.upande_webshop.shopping_cart.cart.update_cart_consignee', {
+    consignee: consignee || '',
+  });
+
+// Cart-level Line Code. Also not in the RT4 plan's literal list, wired for the
+// same reason as Consignee: `_check_required_cart_fields` requires it whenever
+// `show_cart_line_code` (default on) is truthy AND the field exists — true on
+// this site. -> { name, line_code }
+export const updateCartLineCode = (lineCode) =>
+  api('upande_webshop.upande_webshop.shopping_cart.cart.update_cart_line_code', {
+    line_code: lineCode || '',
+  });
+
+// Cart-level Box Type (distinct from Product.jsx's per-line custom_box_type —
+// this overwrites every line's box type at once). Returns rendered HTML
+// fragments (server template partials) which this SPA does not consume;
+// Cart.jsx re-fetches getCart() after calling this instead.
+export const updateCartBoxType = (boxType) =>
+  api('upande_webshop.upande_webshop.shopping_cart.cart.update_cart_box_type', {
+    box_type: boxType || '',
+  });
+
+// -> Sales Order/Quotation `name` on success, or { error: message } (not
+// thrown) when a required cart field is missing or a box-type minimum isn't
+// met — confirmed by reading place_order()/request_for_quotation() in cart.py.
+export const placeOrder = () =>
+  api('upande_webshop.upande_webshop.shopping_cart.cart.place_order');
+
+export const requestForQuotation = () =>
+  api('upande_webshop.upande_webshop.shopping_cart.cart.request_for_quotation');
+
+// Step 2 of the "Use Sales Order as Cart" two-step checkout (Save Order →
+// Submit Order): submits the draft Sales Order cart that request_for_quotation
+// left in draft.
+export const submitCartOrder = () =>
+  api('upande_webshop.upande_webshop.shopping_cart.cart.submit_cart_order');
 
 // Resolve a single Website Item by its route (product-detail param). There is
 // no dedicated "get item by route" whitelisted method, but `route` is a plain
