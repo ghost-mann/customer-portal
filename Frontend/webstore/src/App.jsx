@@ -6,6 +6,7 @@ import Footer from './components/Footer';
 import Shop from './pages/Shop';
 import Product from './pages/Product';
 import Cart from './pages/Cart';
+import Wishlist from './pages/Wishlist';
 
 export default function App() {
   const { loading, error, bootstrap } = useStore();
@@ -22,7 +23,8 @@ export default function App() {
         {!loading && !error && page === 'shop' && <Shop />}
         {!loading && !error && page === 'product' && <Product />}
         {!loading && !error && page === 'cart' && <Cart />}
-        {!loading && !error && page !== 'shop' && page !== 'product' && page !== 'cart' && (
+        {!loading && !error && page === 'wishlist' && <Wishlist />}
+        {!loading && !error && page !== 'shop' && page !== 'product' && page !== 'cart' && page !== 'wishlist' && (
           <div className="boot"><h1>Coming soon</h1><p>The “{page}” page ships in a later phase.</p></div>
         )}
       </main>

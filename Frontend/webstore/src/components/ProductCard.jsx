@@ -1,4 +1,6 @@
 import { useRoute } from '../router';
+import { useStore } from '../store';
+import WishlistButton from './WishlistButton';
 
 // get_product_filter_data items carry no price/stem_length — those only
 // appear on the detail page via get_product_info_for_website (RT3). Here we
@@ -11,6 +13,7 @@ function stockLabel(product) {
 
 export default function ProductCard({ product }) {
   const { navigate } = useRoute();
+  const enableWishlist = useStore((s) => s.settings && s.settings.enable_wishlist);
   const label = stockLabel(product);
   return (
     <button
@@ -21,7 +24,13 @@ export default function ProductCard({ product }) {
         {product.website_image
           ? <img src={product.website_image} alt={product.web_item_name} loading="lazy" />
           : <span aria-hidden="true" className="material-symbols-outlined ws-card-ph">local_florist</span>}
-        {product.wished && <span className="ws-badge">Wishlisted</span>}
+        {enableWishlist && (
+          <WishlistButton
+            itemCode={product.item_code}
+            wished={product.wished}
+            className="ws-card-wish"
+          />
+        )}
         {label && <span className="ws-badge ws-badge-muted">{label}</span>}
       </div>
       <div className="ws-card-body">

@@ -166,3 +166,80 @@ export const stashPendingCart = (entries) =>
   api('upande_webshop.upande_webshop.shopping_cart.pending_cart.stash', {
     entries: JSON.stringify(entries || []),
   });
+
+// ---- Wishlist (RT5) — confirmed by reading
+// apps/upande_webshop/upande_webshop/upande_webshop/doctype/wishlist/wishlist.py.
+// Both are `@frappe.whitelist()` with NO allow_guest=True, so both are
+// login-required (confirmed live: guest POST -> 403 PermissionError "Function
+// ...add_to_wishlist is not whitelisted" — frappe's guest-vs-whitelisted
+// check, not a missing decorator). -> { wish_count }
+export const addToWishlist = (itemCode) =>
+  api('upande_webshop.upande_webshop.doctype.wishlist.wishlist.add_to_wishlist', {
+    item_code: itemCode,
+  });
+
+export const removeFromWishlist = (itemCode) =>
+  api('upande_webshop.upande_webshop.doctype.wishlist.wishlist.remove_from_wishlist', {
+    item_code: itemCode,
+  });
+
+// There is no dedicated whitelisted "list my wishlist" method — the only
+// reader (templates/pages/wishlist.py's get_wishlist_items()) is a plain
+// Python function feeding Jinja page context, never `@frappe.whitelist()`'d,
+// so it isn't reachable over the JSON API. get_product_filter_data already
+// annotates every returned item with `wished` for the current session
+// (product_data_engine/query.py: `item.wished = item.item_code in
+// wished_codes`), so the wishlist page instead re-walks that endpoint page by
+// page (using the site's own products_per_page — get_product_filter_data has
+// no page-length override) and keeps only the wished items. Capped at 50
+// pages so a very large catalogue can't spin forever.
+export const getWishlistItems = async () => {
+  const wished = [];
+  let start = 0;
+  for (let page = 0; page < 50; page++) {
+    const data = await getProductFilterData({ start, from_filters: false });
+    const items = data.items || [];
+    for (const item of items) if (item.wished) wished.push(item);
+    const count = data.items_count || 0;
+    start += items.length;
+    if (items.length === 0 || start >= count) break;
+  }
+  return wished;
+};
+
+// ---- Item Review (RT5) — confirmed by reading
+// apps/upande_webshop/upande_webshop/upande_webshop/doctype/item_review/item_review.py.
+// get_item_reviews has NO allow_guest=True (confirmed live: guest GET -> same
+// 403 "not whitelisted" shape as wishlist above) despite the Jinja
+// customer_reviews.html page rendering reviews for guests — that page calls
+// get_item_reviews() as a plain Python import inside get_context(),
+// bypassing the whitelist/guest gate entirely; the JSON API path has no such
+// back door. So reviews are only readable through this API for a logged-in
+// session — the Reviews section below gates on window.logged_in in addition
+// to settings.enable_reviews.
+// `web_item` is the Website Item *name* (docname), not item_code — confirmed
+// by reading add_item_review's `"item": frappe.db.get_value("Website Item",
+// web_item, "item_code")` line; pass product.name from get_product_filter_data.
+// -> { reviews:[{name, user, review_title, rating (0-1 fraction), comment,
+//      published_on, ...}], average_rating (0-5), average_whole_rating,
+//      reviews_per_rating:[pct*5], total_reviews }
+export const getItemReviews = (webItem, start = 0, end = 10) =>
+  api('upande_webshop.upande_webshop.doctype.item_review.item_review.get_item_reviews', {
+    web_item: webItem,
+    start,
+    end,
+  });
+
+// add_item_review is `@frappe.whitelist()` (also no allow_guest=True) and
+// additionally throws its own UnverifiedReviewer error if
+// frappe.session.user === "Guest" as defense-in-depth — either gate stops a
+// guest. `rating` here is the 0-1 fraction the doctype stores (a 5-star pick
+// -> 1.0, confirmed live: rating=1 round-tripped as average_rating=5.0).
+// No return value on success (bench-execute confirmed live: empty response).
+export const addItemReview = (webItem, title, rating, comment) =>
+  api('upande_webshop.upande_webshop.doctype.item_review.item_review.add_item_review', {
+    web_item: webItem,
+    title,
+    rating,
+    comment: comment || '',
+  });

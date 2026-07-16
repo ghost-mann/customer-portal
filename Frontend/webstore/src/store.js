@@ -152,6 +152,15 @@ export const useStore = create((set, get) => ({
     }
   },
 
+  // Optimistic wishlist reconciliation (RT5): WishlistButton calls this right
+  // after a toggle so any card for the same item_code already on-screen (Shop
+  // grid) reflects the new state without a full re-fetch. Product.jsx keeps
+  // its own local `product` state and does not read this — it only affects
+  // `items` in the shared store.
+  setItemWished: (itemCode, wished) => set((s) => ({
+    items: s.items.map((it) => (it.item_code === itemCode ? { ...it, wished } : it)),
+  })),
+
   setSearch: (term) => get().runQuery({ search: term }),
 
   setItemGroup: (itemGroup) => get().runQuery({ item_group: itemGroup }),

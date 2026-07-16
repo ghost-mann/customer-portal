@@ -13,6 +13,8 @@ import Gallery from '../components/Gallery';
 import PriceBlock from '../components/PriceBlock';
 import QtyStepper from '../components/QtyStepper';
 import StemLengthSelector from '../components/StemLengthSelector';
+import WishlistButton from '../components/WishlistButton';
+import Reviews from '../components/Reviews';
 
 // Product detail: resolve the Website Item by its route, price/stock it via
 // get_product_info_for_website, optionally run the has_variants attribute
@@ -154,7 +156,12 @@ export default function Product() {
 
         <div className="ws-pd-info">
           <div className="ws-pd-group">{product.item_group}</div>
-          <h1 className="ws-pd-title">{product.web_item_name}</h1>
+          <div className="ws-pd-title-row">
+            <h1 className="ws-pd-title">{product.web_item_name}</h1>
+            {settings && settings.enable_wishlist && (
+              <WishlistButton itemCode={product.item_code} wished={product.wished} size="lg" />
+            )}
+          </div>
 
           <PriceBlock settings={settings} productInfo={productInfo} loading={infoLoading} />
 
@@ -228,6 +235,8 @@ export default function Product() {
           )}
         </div>
       </div>
+
+      {settings && settings.enable_reviews && <Reviews webItem={product.name} />}
     </div>
   );
 }
