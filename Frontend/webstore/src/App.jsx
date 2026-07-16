@@ -3,9 +3,10 @@ import { useStore } from './store';
 import { useRoute } from './router';
 import Nav from './components/Nav';
 import Footer from './components/Footer';
+import Home from './pages/Home';
 
 export default function App() {
-  const { loading, error, home, bootstrap } = useStore();
+  const { loading, error, bootstrap } = useStore();
   const { page } = useRoute();
 
   useEffect(() => { bootstrap(); }, []);
@@ -16,11 +17,9 @@ export default function App() {
       <main>
         {loading && <div className="boot">Loading Upande Webstore…</div>}
         {error && <div className="boot">Could not load the shop: {error}</div>}
-        {!loading && !error && (
-          <div className="boot">
-            <h1>Upande Webstore</h1>
-            <p>Route: <strong>{page}</strong> · {home?.new_arrivals?.length ?? 0} products</p>
-          </div>
+        {!loading && !error && page === 'home' && <Home />}
+        {!loading && !error && page !== 'home' && (
+          <div className="boot"><h1>Coming soon</h1><p>The “{page}” page ships in a later phase.</p></div>
         )}
       </main>
       <Footer />
