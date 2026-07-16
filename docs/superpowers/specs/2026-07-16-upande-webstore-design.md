@@ -1,8 +1,51 @@
 # Upande Webstore — Design Spec
 
 **Date:** 2026-07-16
-**Status:** Approved for planning
+**Status:** Approved for planning — **REVISED (see Revision R1 below)**
 **Author:** james@upande.com (with Claude)
+
+## Revision R1 (2026-07-16) — no new backend; consume `upande_webshop` directly
+
+Direction correction from the user: **do not add any backend.** `upande_webshop`
+is the backend as-is. Build **only the React frontend**, which:
+- **Consumes `upande_webshop`'s own whitelisted APIs directly** — never a new
+  `customer_portal/api/store.py` (that adapter, its test, and the demo seeder are
+  removed). Endpoints:
+  - Catalog + filters + **embedded `Webshop Settings`** + sub-categories + count →
+    `upande_webshop.upande_webshop.api.get_product_filter_data(query_args)`
+    (guest-OK). Item fields returned: `web_item_name, name, item_name, item_code,
+    website_image, variant_of, has_variants, item_group, web_long_description,
+    short_description, route, website_warehouse, ranking, on_backorder, stock_qty,
+    in_stock, in_cart, cart_qty, wished`.
+  - Product price/stock/qty → `…shopping_cart.product_info.get_product_info_for_website(item_code)`
+    → `{product_info:{price:{formatted_price,…}, qty, uom, stock_qty, in_stock,
+    on_backorder, show_stock_qty}, cart_settings}`.
+  - Cart/checkout → `…shopping_cart.cart.*` (`get_cart_quotation`,
+    `update_cart(item_code, qty, …, custom_length, custom_box_type)`,
+    `apply_coupon_code`, `place_order`, `request_for_quotation`,
+    `search_delivery_points`, `update_cart_box_type`, …).
+    Cart doctype = Quotation (or Sales Order per settings) — **server-managed**, so
+    §7's client-side-localStorage cart is superseded: use the server cart directly.
+  - Wishlist/reviews/box → the relevant `upande_webshop` whitelisted methods
+    (`api.get_box_items`, `api.get_guest_redirect_on_action`, Wishlist/Item Review
+    controller methods).
+- **Mirrors `upande_webshop`'s existing storefront structure** (do not invent a
+  marketing home): shop grid (`/upande-webstore` ← `get_product_filter_data`),
+  product detail (`/upande-webstore/p/<website-item-route>`), `/cart`, `/wishlist`,
+  `/bouquet`, `/orders/<name>` — matching upande_webshop's `www/webshop`,
+  `templates/generators/item`, `templates/pages/{cart,wishlist,order}`,
+  `www/bouquet`.
+- **Driven by `Webshop Settings` (embedded in `get_product_filter_data`) + Website
+  Settings** for toggles (`show_price`, `hide_price_for_guest`, `show_stem_length`,
+  `enable_variants`, `show_box_type`, `enable_wishlist`, `enable_reviews`,
+  `enable_checkout`, `show_bouquets_page`, `products_per_page`, `login_required_to_view_products`, …).
+- Delivered as: **React SPA in `customer_portal` at `/upande-webstore`**, Upande
+  black/white/gold, single-source `brand.js` for per-farm branches.
+
+Sections 5.2/5.3 (new API module), 6 (direct-doctype mapping), and 7 (client cart)
+below are **superseded by this revision** where they conflict. Everything about
+routing/area/branding/visual identity still holds. New plan:
+`docs/superpowers/plans/2026-07-16-upande-webstore-rebuild.md`.
 
 ## 1. Overview
 
