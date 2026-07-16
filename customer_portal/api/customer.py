@@ -217,6 +217,12 @@ def get_my_context(customer: str | None = None) -> dict:
 	For staff with no customer selected, returns a stub asking them to pick one."""
 	user = frappe.session.user
 
+	# The portal header brands off the instance's own company (default company,
+	# else the first Company on the site), so each farm shows its own name.
+	instance_company = frappe.db.get_single_value("Global Defaults", "default_company") \
+		or (frappe.get_all("Company", pluck="name", order_by="creation asc", limit_page_length=1) or [None])[0] \
+		or "Upande"
+
 	# Reps/staff land on My Accounts by default — even if they also happen to be
 	# a customer-contact — and only enter an account once they explicitly select
 	# one (which arrives as the `customer` arg). Pure customer-contacts skip this
@@ -231,6 +237,7 @@ def get_my_context(customer: str | None = None) -> dict:
 			"can_search_all": _is_staff(),
 			"needs_impersonation": True,
 			"customer": None,
+			"instance_company": instance_company,
 		}
 
 	cust = _resolve_customer(customer, allow_staff_unset=True)
@@ -246,6 +253,7 @@ def get_my_context(customer: str | None = None) -> dict:
 			"can_search_all": _is_staff(),
 			"needs_impersonation": True,
 			"customer": None,
+			"instance_company": instance_company,
 		}
 
 	c = frappe.get_doc("Customer", cust)
@@ -279,6 +287,7 @@ def get_my_context(customer: str | None = None) -> dict:
 		"user": user,
 		"full_name": frappe.db.get_value("User", user, "full_name") or user,
 		"customer": cust,
+		"instance_company": instance_company,
 		"customer_name": c.customer_name,
 		"customer_type": c.customer_type,
 		"customer_group": c.customer_group,

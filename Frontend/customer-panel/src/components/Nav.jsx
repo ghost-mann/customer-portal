@@ -7,6 +7,9 @@ import ImpersonatePicker from '@shared/ImpersonatePicker';
 
 export default function Nav({ ctx }) {
   const { impersonate, setImpersonate } = useStore();
+  // Instance company name from get_my_context (api/customer.py); falls back to Upande
+  // until context loads (ctx is null during the initial load state).
+  const company = ctx?.instance_company || 'Upande';
   async function onLogout() {
     try { await api('logout', {}); } catch (e) {}
     window.location.href = '/login';
@@ -15,7 +18,7 @@ export default function Nav({ ctx }) {
     <nav className="nav">
       <a href="/customer-portal" className="brand">
         <div className="brand-mark"><Logo /></div>
-        <b>Upande</b>
+        <b>{company}</b>
       </a>
       <div className="brand-sub">Customer portal</div>
       <div className="nav-right">
