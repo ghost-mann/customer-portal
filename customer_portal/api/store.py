@@ -39,7 +39,14 @@ def _default_currency():
     return "USD"
 
 
-def _card(web_item_name):
+def _hide_prices_for_guest():
+    """True when the current session is Guest and Webshop Settings hides prices."""
+    if frappe.session.user != "Guest":
+        return False
+    return bool(frappe.db.get_single_value("Webshop Settings", "hide_price_for_guest"))
+
+
+def _card(web_item_name, hide_prices=False):
     """Normalize a Website Item into the canonical storefront card dict."""
     wi = frappe.db.get_value(
         "Website Item", web_item_name,
@@ -65,12 +72,12 @@ def _card(web_item_name):
         "image": wi.website_image,
         "thumbnail": wi.thumbnail or wi.website_image,
         "short_description": wi.short_description,
-        "price_min": pmin,
-        "price_max": pmax,
+        "price_min": None if hide_prices else pmin,
+        "price_max": None if hide_prices else pmax,
         "currency": _default_currency(),
         "in_stock": in_stock,
         "on_backorder": bool(wi.on_backorder),
-        "stem_lengths": [r["stem_length"] for r in rows],
+        "stem_lengths": [] if hide_prices else [r["stem_length"] for r in rows],
         "has_offer": has_offer,
     }
 
@@ -102,12 +109,14 @@ def get_settings():
 
 @frappe.whitelist(allow_guest=True)
 def get_home():
+    hide = _hide_prices_for_guest()
+
     # Featured — read the child rows directly (parent-agnostic), preserve order.
     feat_rows = frappe.get_all(
         "Homepage Featured Product",
         fields=["item_code"], order_by="idx asc", limit_page_length=0,
     )
-    featured = [c for c in (_card(r.item_code) for r in feat_rows) if c]
+    featured = [c for c in (_card(r.item_code, hide_prices=hide) for r in feat_rows) if c]
 
     # Offers — distinct offers across published Website Items.
     offer_rows = frappe.db.sql("""
@@ -134,7 +143,7 @@ def get_home():
         "Website Item", filters={"published": 1}, fields=["name"],
         order_by="creation desc", limit_page_length=8,
     )
-    new_arrivals = [c for c in (_card(r.name) for r in na_rows) if c]
+    new_arrivals = [c for c in (_card(r.name, hide_prices=hide) for r in na_rows) if c]
 
     return {
         "featured": featured,
