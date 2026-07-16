@@ -45,9 +45,16 @@ button{font-family:inherit;cursor:pointer;}
 .ws-nav{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:28px;
   height:68px;padding:0 32px;background:rgba(var(--paper-rgb),0.82);backdrop-filter:saturate(1.4) blur(12px);
   border-bottom:1px solid var(--line);}
-.ws-brand{display:flex;align-items:center;gap:10px;background:none;border:none;}
-.ws-brand-mark{width:32px;height:32px;border-radius:50%;background:var(--ink);color:var(--paper);
-  display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;}
+.ws-brand{display:flex;align-items:center;gap:10px;}
+/* Two independent links live inside .ws-brand: the logo goes to the Frappe
+   Desk (a real app switch, so it's a full navigation, not the SPA router),
+   the wordmark stays on the storefront. Both are plain buttons styled flush
+   with no border/background so together they read as one brand lockup. */
+.ws-brand-logo-btn,.ws-brand-name-btn{background:none;border:none;padding:2px;display:inline-flex;
+  align-items:center;border-radius:8px;}
+.ws-brand-logo-btn:hover,.ws-brand-name-btn:hover{opacity:0.75;}
+.ws-brand-logo-btn:focus-visible,.ws-brand-name-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+.ws-brand-logo{height:30px;width:auto;object-fit:contain;display:block;}
 .ws-brand-name{font-family:var(--serif);font-size:22px;font-weight:500;letter-spacing:-0.01em;}
 .ws-nav-toggle{display:none;background:none;border:none;align-items:center;justify-content:center;
   width:38px;height:38px;color:var(--ink);border-radius:999px;}
@@ -104,7 +111,11 @@ button{font-family:inherit;cursor:pointer;}
 .ws-footer-note{font-size:12.5px;opacity:0.7;}
 
 /* ── Shop ── */
-.ws-home,.ws-shop{max-width:1200px;margin:0 auto;padding:0 32px;}
+.ws-home,.ws-shop{max-width:1200px;margin:0 auto;padding:0 32px;transition:max-width .15s, padding .15s;}
+/* Full-width toggle (ws-shop-toolbar) — widens the container on wide screens
+   for shoppers who'd rather use the space than keep the editorial 1200px
+   column. Persisted via ws_full_width in localStorage; default off. */
+.ws-shop-full{max-width:none;padding:0 20px;}
 .ws-hero{margin:24px 0 8px;border-radius:20px;overflow:hidden;background:var(--ink);color:var(--paper);
   background-image:linear-gradient(120deg,rgba(var(--ink-rgb),0.92),rgba(var(--ink-rgb),0.72)),url('https://images.unsplash.com/photo-1526047932273-341f2a7631f9?w=1600');
   background-size:cover;background-position:center;}
@@ -132,9 +143,38 @@ button{font-family:inherit;cursor:pointer;}
 .ws-cat-name{font-weight:500;}
 .ws-cat-count{color:var(--muted);font-size:12px;}
 
+/* ── Shop toolbar: breadcrumb + full-width toggle + tools menu ── */
+.ws-shop-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  flex-wrap:wrap;margin-bottom:18px;}
+.ws-breadcrumb{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:13px;color:var(--muted);}
+.ws-breadcrumb-link{background:none;border:none;padding:2px 4px;border-radius:6px;color:var(--muted);
+  font-size:13px;}
+.ws-breadcrumb-link:hover{color:var(--ink);text-decoration:underline;}
+.ws-breadcrumb-sep{color:var(--line);}
+.ws-breadcrumb-current{color:var(--ink);font-weight:500;padding:2px 4px;}
+.ws-toolbar-actions{display:flex;align-items:center;gap:8px;position:relative;}
+.ws-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;
+  border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);}
+.ws-icon-btn .material-symbols-outlined{font-size:20px;}
+.ws-icon-btn:hover{border-color:var(--gold);}
+.ws-icon-btn-active{background:var(--ink);border-color:var(--ink);color:var(--paper);}
+.ws-icon-btn-active:hover{border-color:var(--ink);}
+/* Tools (kebab) dropdown — same floating-panel treatment as the cart's
+   product-search menu (ws-cart-search-menu): surface card, line border, soft
+   shadow, positioned relative to its trigger. */
+.ws-tools-menu{position:absolute;top:calc(100% + 8px);right:0;z-index:30;min-width:200px;
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  box-shadow:0 12px 34px rgba(var(--ink-rgb),0.14);padding:6px;display:flex;flex-direction:column;gap:2px;}
+.ws-tools-menu-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  background:none;border:none;padding:10px 12px;border-radius:8px;font-size:13.5px;color:var(--ink);}
+.ws-tools-menu-item:hover{background:var(--gold-soft);}
+.ws-tools-menu-item .material-symbols-outlined{font-size:19px;color:var(--muted);}
+
 /* ── Shop layout: filter rail + grid ── */
 .ws-shop-layout{display:grid;grid-template-columns:240px 1fr;gap:32px;align-items:start;}
-.ws-rail{display:flex;flex-direction:column;gap:22px;position:sticky;top:88px;}
+.ws-filter-card{position:sticky;top:88px;background:var(--surface);border:1px solid var(--line);
+  border-radius:14px;padding:22px;box-shadow:0 10px 28px rgba(var(--ink-rgb),0.06);}
+.ws-rail{display:flex;flex-direction:column;gap:22px;}
 .ws-rail-block{display:flex;flex-direction:column;gap:10px;}
 .ws-rail-title{font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);}
 .ws-search{height:42px;padding:0 14px;border:1px solid var(--line);border-radius:10px;
@@ -167,8 +207,10 @@ button{font-family:inherit;cursor:pointer;}
 
 @media(max-width:860px){
   .ws-shop-layout{grid-template-columns:1fr;}
-  .ws-rail{position:static;flex-direction:row;flex-wrap:wrap;gap:20px 28px;}
+  .ws-filter-card{position:static;}
+  .ws-rail{flex-direction:row;flex-wrap:wrap;gap:20px 28px;}
   .ws-rail-block{min-width:220px;}
+  .ws-shop-toolbar{align-items:flex-start;}
 }
 
 /* ── Product card ── */

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { brand } from '../brand';
 import { useRoute } from '../router';
 import { useStore } from '../store';
-import { isLoggedIn } from '../lib/auth';
+import { isLoggedIn, getPortalHref } from '../lib/auth';
 
 // Nav mirrors upande_webshop's own storefront structure (Shop / Bouquets /
 // Wishlist / Cart / Orders), gated the same way the pages themselves gate —
@@ -32,7 +32,7 @@ export default function Nav() {
   // not go through get_guest_redirect_on_action() (that helper is for
   // resuming an in-progress add-to-cart/wishlist/review action, not a plain
   // nav link — see lib/auth.js's requireLogin for the action-redirect path).
-  const portalHref = loggedIn ? '/customer-portal' : '/login?redirect-to=/customer-portal';
+  const portalHref = getPortalHref();
 
   function go(path) {
     setMenuOpen(false);
@@ -41,10 +41,24 @@ export default function Nav() {
 
   return (
     <header className="ws-nav">
-      <button className="ws-brand" onClick={() => go('/')}>
-        <span className="ws-brand-mark" aria-hidden="true">{brand.name[0]}</span>
-        <span className="ws-brand-name">{brand.name}</span>
-      </button>
+      <div className="ws-brand">
+        {/* The logo image is a real link to the Frappe Desk — a full
+           navigation (not the SPA router), since /app is a different
+           application entirely. The wordmark stays a router link back to
+           the storefront home, so both destinations remain reachable from
+           the same brand lockup. */}
+        <button
+          type="button"
+          className="ws-brand-logo-btn"
+          onClick={() => { window.location.href = '/app'; }}
+          aria-label="Open Desk"
+        >
+          <img className="ws-brand-logo" src="/assets/upande_webshop/images/UpandeLogo.png" alt="Upande" />
+        </button>
+        <button type="button" className="ws-brand-name-btn" onClick={() => go('/')}>
+          <span className="ws-brand-name">{brand.name}</span>
+        </button>
+      </div>
 
       <button
         type="button"

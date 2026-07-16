@@ -4,6 +4,15 @@ export function isLoggedIn() {
   return !!window.logged_in;
 }
 
+// Static destination for the "Customer Portal" action wherever it appears
+// (Nav's top-right link + mobile menu, Shop's tools menu) — logged-in goes
+// straight to the portal, a guest is sent through /login with a redirect
+// back to it. Shared here so every caller stays in lockstep instead of
+// re-deriving the same ternary.
+export function getPortalHref() {
+  return isLoggedIn() ? '/customer-portal' : '/login?redirect-to=/customer-portal';
+}
+
 // Sends a guest to sign in, returning to `returnTo` afterwards. Prefers
 // Webshop Settings' configured redirect (get_guest_redirect_on_action —
 // same helper every other guest-gated action in this app already uses:

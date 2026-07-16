@@ -1,7 +1,41 @@
+import { useEffect, useState } from 'react';
 import { brand } from '../brand';
+import { useRoute } from '../router';
 import { useStore } from '../store';
 import ProductCard from '../components/ProductCard';
 import FilterRail from '../components/FilterRail';
+import ToolsMenu from '../components/ToolsMenu';
+
+const FULL_WIDTH_KEY = 'ws_full_width';
+
+function readStoredFullWidth() {
+  try { return localStorage.getItem(FULL_WIDTH_KEY) === '1'; } catch { return false; }
+}
+
+// Home › Shop [› <category>] — Home re-lands on the shop (there's no
+// separate home route: router.pathToRoute maps both '/' and '/shop' to the
+// 'shop' page), Shop itself is only a link while a category filter is
+// active (clicking it clears that filter), and the active category — when
+// present — is the trailing, non-interactive crumb.
+function Breadcrumb({ category, onHomeClick, onShopClick }) {
+  return (
+    <nav className="ws-breadcrumb" aria-label="Breadcrumb">
+      <button type="button" className="ws-breadcrumb-link" onClick={onHomeClick}>Home</button>
+      <span className="ws-breadcrumb-sep" aria-hidden="true">›</span>
+      {category ? (
+        <button type="button" className="ws-breadcrumb-link" onClick={onShopClick}>Shop</button>
+      ) : (
+        <span className="ws-breadcrumb-current" aria-current="page">Shop</span>
+      )}
+      {category && (
+        <>
+          <span className="ws-breadcrumb-sep" aria-hidden="true">›</span>
+          <span className="ws-breadcrumb-current" aria-current="page">{category}</span>
+        </>
+      )}
+    </nav>
+  );
+}
 
 function Pagination() {
   const settings = useStore((s) => s.settings);
@@ -57,9 +91,21 @@ export default function Shop() {
   const items = useStore((s) => s.items);
   const itemsCount = useStore((s) => s.itemsCount);
   const filtering = useStore((s) => s.filtering);
+  const category = useStore((s) => s.query.item_group);
+  const setItemGroup = useStore((s) => s.setItemGroup);
+  const clearFilters = useStore((s) => s.clearFilters);
+  const { navigate } = useRoute();
+
+  // Constrained (1200px, centered) vs full-width — a toolbar toggle for
+  // shoppers who'd rather use the whole viewport on wide screens.
+  // Persisted so the choice survives a reload; defaults to off (constrained).
+  const [fullWidth, setFullWidth] = useState(readStoredFullWidth);
+  useEffect(() => {
+    try { localStorage.setItem(FULL_WIDTH_KEY, fullWidth ? '1' : '0'); } catch { /* storage unavailable */ }
+  }, [fullWidth]);
 
   return (
-    <div className="ws-shop">
+    <div className={`ws-shop${fullWidth ? ' ws-shop-full' : ''}`}>
       <section className="ws-hero ws-hero-compact">
         <div className="ws-hero-inner">
           <div className="ws-hero-eyebrow">{brand.hero.eyebrow}</div>
@@ -74,8 +120,33 @@ export default function Shop() {
           <span className="ws-section-count">{itemsCount} item{itemsCount === 1 ? '' : 's'}</span>
         </div>
 
+        <div className="ws-shop-toolbar">
+          <Breadcrumb
+            category={category}
+            onHomeClick={() => navigate('/')}
+            onShopClick={() => setItemGroup('')}
+          />
+          <div className="ws-toolbar-actions">
+            <button
+              type="button"
+              className={`ws-icon-btn${fullWidth ? ' ws-icon-btn-active' : ''}`}
+              aria-pressed={fullWidth}
+              aria-label={fullWidth ? 'Switch to constrained width' : 'Switch to full width'}
+              title={fullWidth ? 'Switch to constrained width' : 'Switch to full width'}
+              onClick={() => setFullWidth((v) => !v)}
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">
+                {fullWidth ? 'fit_screen' : 'width_full'}
+              </span>
+            </button>
+            <ToolsMenu onClearFilters={clearFilters} />
+          </div>
+        </div>
+
         <div className="ws-shop-layout">
-          <FilterRail />
+          <div className="ws-filter-card">
+            <FilterRail />
+          </div>
 
           <div className="ws-shop-main">
             {items.length === 0 ? (
