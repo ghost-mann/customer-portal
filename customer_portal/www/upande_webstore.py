@@ -3,11 +3,13 @@
 Guests allowed. Internal storefront subpaths (/upande-webstore/shop, /product/..,
 /cart, ..) are aliased to this template by website_route_rules in hooks.py; the
 React app reads window.location.pathname to choose the page.
+
+No app-specific data is fetched here — the SPA sources everything (items,
+filters, settings) directly from upande_webshop's own whitelisted APIs
+(see Frontend/webstore/src/lib/api.js). This file only supplies session glue.
 """
 
 import frappe
-
-from customer_portal.api.store import get_settings
 
 no_cache = 1
 
@@ -20,6 +22,5 @@ def get_context(context):
 		"frappe_user":      None if is_guest else user,
 		"frappe_user_full": None if is_guest else (frappe.db.get_value("User", user, "full_name") or user),
 		"logged_in":        not is_guest,
-		"webshop_settings": get_settings(),
 	}
 	return context

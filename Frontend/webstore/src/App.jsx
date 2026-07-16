@@ -3,7 +3,7 @@ import { useStore } from './store';
 import { useRoute } from './router';
 import Nav from './components/Nav';
 import Footer from './components/Footer';
-import Home from './pages/Home';
+import Shop from './pages/Shop';
 
 export default function App() {
   const { loading, error, bootstrap } = useStore();
@@ -17,8 +17,8 @@ export default function App() {
       <main>
         {loading && <div className="boot">Loading Upande Webstore…</div>}
         {error && <div className="boot">Could not load the shop: {error}</div>}
-        {!loading && !error && page === 'home' && <Home />}
-        {!loading && !error && page !== 'home' && (
+        {!loading && !error && page === 'shop' && <Shop />}
+        {!loading && !error && page !== 'shop' && (
           <div className="boot"><h1>Coming soon</h1><p>The “{page}” page ships in a later phase.</p></div>
         )}
       </main>

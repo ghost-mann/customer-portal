@@ -1,9 +1,14 @@
 import { create } from 'zustand';
-import { getSettings, getHome } from './lib/api';
+import { getProductFilterData } from './lib/api';
 
 export const useStore = create((set, get) => ({
-  settings: window.webshop_settings || null,
-  home: null,
+  // `settings` is the full Webshop Settings doc, embedded on every
+  // get_product_filter_data response — no separate settings endpoint exists.
+  settings: null,
+  items: [],
+  filters: {},
+  subCategories: [],
+  itemsCount: 0,
   loading: true,
   error: null,
 
@@ -14,11 +19,15 @@ export const useStore = create((set, get) => ({
   bootstrap: async () => {
     set({ loading: true, error: null });
     try {
-      const [settings, home] = await Promise.all([
-        get().settings ? Promise.resolve(get().settings) : getSettings(),
-        getHome(),
-      ]);
-      set({ settings, home, loading: false });
+      const data = await getProductFilterData({});
+      set({
+        settings: data.settings || null,
+        items: data.items || [],
+        filters: data.filters || {},
+        subCategories: data.sub_categories || [],
+        itemsCount: data.items_count || 0,
+        loading: false,
+      });
     } catch (e) {
       set({ error: String(e), loading: false });
     }
