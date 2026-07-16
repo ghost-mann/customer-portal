@@ -9,6 +9,7 @@ import Cart from './pages/Cart';
 import Wishlist from './pages/Wishlist';
 import Bouquets from './pages/Bouquets';
 import Order from './pages/Order';
+import Orders from './pages/Orders';
 
 export default function App() {
   const { loading, error, bootstrap } = useStore();
@@ -28,7 +29,8 @@ export default function App() {
         {!loading && !error && page === 'wishlist' && <Wishlist />}
         {!loading && !error && page === 'bouquets' && <Bouquets />}
         {!loading && !error && page === 'confirmation' && <Order />}
-        {!loading && !error && !['shop', 'product', 'cart', 'wishlist', 'bouquets', 'confirmation'].includes(page) && (
+        {!loading && !error && page === 'orders' && <Orders />}
+        {!loading && !error && !['shop', 'product', 'cart', 'wishlist', 'bouquets', 'confirmation', 'orders'].includes(page) && (
           <div className="boot"><h1>Coming soon</h1><p>The “{page}” page ships in a later phase.</p></div>
         )}
       </main>

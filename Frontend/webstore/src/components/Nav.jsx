@@ -84,6 +84,11 @@ export default function Nav() {
             Wishlist{showWishlistCount ? ` (${wishlistCount})` : ''}
           </button>
         )}
+        {/* In-SPA order history (pages/Orders.jsx) — a real router navigation
+           like every other nav entry here, not an anchor out to erpnext's own
+           /orders page. Only meaningful for a signed-in shopper (list_orders
+           is login-gated, same as Cart/Wishlist), so gated the same way. */}
+        {loggedIn && <button onClick={() => go('/orders')}>Orders</button>}
       </nav>
 
       <div className="ws-nav-right">

@@ -418,6 +418,34 @@ button{font-family:inherit;cursor:pointer;}
 .ws-order-totals{align-self:flex-end;min-width:280px;}
 .ws-order-fallback-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
 
+/* ── Order history / list (RT8) ── */
+.ws-orders-page{padding-top:32px;padding-bottom:64px;display:flex;flex-direction:column;gap:24px;}
+.ws-orders-empty{display:flex;flex-direction:column;align-items:center;gap:14px;}
+.ws-orders-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;}
+.ws-orders-table{width:100%;border-collapse:collapse;font-size:13.5px;}
+.ws-orders-table th{text-align:left;color:var(--muted);font-weight:600;font-size:11.5px;
+  text-transform:uppercase;letter-spacing:0.05em;padding:12px 16px;border-bottom:1px solid var(--line);
+  background:var(--surface);white-space:nowrap;}
+.ws-orders-table td{padding:14px 16px;border-bottom:1px solid var(--line);white-space:nowrap;}
+.ws-orders-table tr:last-child td{border-bottom:none;}
+.ws-orders-th-amount,.ws-orders-td-amount{text-align:right;}
+.ws-orders-link{background:none;border:none;padding:0;font-weight:600;color:var(--ink);
+  text-decoration:underline;text-underline-offset:2px;cursor:pointer;font-size:inherit;}
+.ws-orders-link:hover{color:var(--gold);}
+.ws-order-status{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;}
+.ws-order-status-good{background:var(--good-soft);color:var(--good);}
+.ws-order-status-bad{background:var(--bad-soft);color:var(--bad);}
+.ws-order-status-muted{background:var(--gold-soft);color:var(--ink);}
+
+/* ── Product-page reviews summary link (RT8) ── */
+.ws-pd-review-summary{display:inline-flex;align-items:center;gap:6px;width:fit-content;
+  font-size:13.5px;font-weight:600;color:var(--ink);text-decoration:none;}
+.ws-pd-review-summary:hover{color:var(--gold);}
+.ws-pd-review-summary .material-symbols-outlined{font-size:17px;}
+.ws-pd-review-star{color:var(--gold);}
+.ws-pd-review-summary-muted{color:var(--muted);font-weight:500;}
+.ws-pd-review-summary-empty{color:var(--muted);font-weight:500;text-decoration:underline;text-underline-offset:2px;}
+
 @media(max-width:640px){
   .ws-pd-title-row{flex-wrap:wrap;}
 }

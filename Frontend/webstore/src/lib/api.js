@@ -309,3 +309,17 @@ export const getBouquetCatalogItems = async (bouquetNames, itemGroup) => {
 // whitelisted", the same guest-vs-whitelisted shape as wishlist/reviews).
 export const getOrderDoc = (doctype, name) =>
   api('frappe.client.get', { doctype, name });
+
+// ---- Order history (RT8) — customer_portal's OWN list_orders (a different
+// app from upande_webshop, confirmed by reading
+// apps/customer_portal/customer_portal/api/customer.py), the same
+// login-gated method the customer-panel app's Orders page already consumes
+// (see customer-panel/src/store.js: `orders:
+// 'customer_portal.api.customer.list_orders'`). `@frappe.whitelist()` with no
+// allow_guest — a guest call 403s the same "not whitelisted" way
+// wishlist/reviews do above, so pages/Orders.jsx gates on window.logged_in
+// before ever calling this, same as Cart.jsx/Order.jsx.
+// -> [{name, transaction_date, delivery_date, status, grand_total, currency,
+//      per_delivered, per_billed, customer_name, po_no}]
+export const listOrders = (limit = 100) =>
+  api('customer_portal.api.customer.list_orders', { limit });

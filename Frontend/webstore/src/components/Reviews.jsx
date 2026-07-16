@@ -62,7 +62,7 @@ export default function Reviews({ webItem }) {
   }
 
   return (
-    <section className="ws-reviews">
+    <section className="ws-reviews" id="reviews">
       <div className="ws-section-hd">
         <h2>Reviews</h2>
         {data && data.total_reviews > 0 && (

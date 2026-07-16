@@ -8,6 +8,7 @@ import {
   updateCart,
   getGuestRedirectOnAction,
   stashPendingCart,
+  getItemReviews,
 } from '../lib/api';
 import Gallery from '../components/Gallery';
 import PriceBlock from '../components/PriceBlock';
@@ -15,6 +16,74 @@ import QtyStepper from '../components/QtyStepper';
 import StemLengthSelector from '../components/StemLengthSelector';
 import WishlistButton from '../components/WishlistButton';
 import Reviews from '../components/Reviews';
+
+// Jumps to the Reviews section (id="reviews", further down this same page)
+// instead of an actual navigation — kept as a real `<a href="#reviews">` for
+// no-JS/middle-click/accessibility, but the click itself scrolls in place
+// rather than letting the browser's default hash-jump interact with the SPA
+// router (App.jsx/router.js key off pathname only, never hash, so this never
+// touches routing either way — the manual scroll is just smoother UX).
+function jumpToReviews(e) {
+  e.preventDefault();
+  document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Compact "★ <avg> · <N> reviews" summary shown near the title/price, linking
+// down to the full Reviews section rather than duplicating a reviews list up
+// here. Reviews are per-Website-Item only (Item Review doctype, no global/
+// customer-listable endpoint) — this is NOT a new data source, it reuses the
+// exact same get_item_reviews call Reviews.jsx makes (lib/api.js
+// getItemReviews); get_item_reviews caches its start=0 response server-side
+// per web_item (item_review.py: `from_cache = not bool(start)`), so this
+// second call (same webItem, default start=0) is a cache hit on the same key
+// Reviews.jsx's own call already populates/reads — no extra query load, and
+// Reviews.jsx's own fetch/submit logic is untouched.
+function ReviewsSummary({ webItem, enabled }) {
+  const [summary, setSummary] = useState(null); // { average_rating, total_reviews } | null
+  const loggedIn = Boolean(window.logged_in);
+
+  useEffect(() => {
+    if (!enabled || !webItem || !loggedIn) { setSummary(null); return; }
+    let cancelled = false;
+    getItemReviews(webItem)
+      .then((res) => {
+        if (cancelled || !res) return;
+        setSummary({ average_rating: res.average_rating, total_reviews: res.total_reviews || 0 });
+      })
+      .catch(() => { if (!cancelled) setSummary(null); });
+    return () => { cancelled = true; };
+  }, [webItem, enabled, loggedIn]);
+
+  if (!enabled) return null;
+
+  // Guest (or not-yet-loaded): get_item_reviews is login-gated (see
+  // lib/api.js), so there's no avg/count to show for a guest — link over to
+  // the Reviews section, which renders its own "Sign in to read and write
+  // reviews" gate.
+  if (!summary) {
+    return (
+      <a href="#reviews" className="ws-pd-review-summary ws-pd-review-summary-muted" onClick={jumpToReviews}>
+        <span className="material-symbols-outlined" aria-hidden="true">reviews</span>
+        Reviews
+      </a>
+    );
+  }
+
+  if (summary.total_reviews > 0) {
+    return (
+      <a href="#reviews" className="ws-pd-review-summary" onClick={jumpToReviews}>
+        <span className="material-symbols-outlined ws-pd-review-star" aria-hidden="true">star</span>
+        {Number(summary.average_rating || 0).toFixed(1)} · {summary.total_reviews} review{summary.total_reviews === 1 ? '' : 's'}
+      </a>
+    );
+  }
+
+  return (
+    <a href="#reviews" className="ws-pd-review-summary ws-pd-review-summary-empty" onClick={jumpToReviews}>
+      Be the first to review
+    </a>
+  );
+}
 
 // Product detail: resolve the Website Item by its route, price/stock it via
 // get_product_info_for_website, optionally run the has_variants attribute
@@ -162,6 +231,8 @@ export default function Product() {
               <WishlistButton itemCode={product.item_code} wished={product.wished} size="lg" />
             )}
           </div>
+
+          <ReviewsSummary webItem={product.name} enabled={Boolean(settings && settings.enable_reviews)} />
 
           <PriceBlock
             settings={settings}

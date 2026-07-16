@@ -15,7 +15,15 @@ export function pathToRoute(pathname) {
   if (seg[0] === 'cart') return { page: 'cart', params: {} };
   if (seg[0] === 'wishlist') return { page: 'wishlist', params: {} };
   if (seg[0] === 'bouquets') return { page: 'bouquets', params: {} };
-  if (seg[0] === 'orders') return { page: 'confirmation', params: { name: seg[1] } };
+  // `/orders/<name>` is the post-checkout DETAIL view (pages/Order.jsx,
+  // reached from Cart.jsx after placing an order) — must keep working
+  // unshadowed. Bare `/orders` (no name segment) is the new order-HISTORY
+  // LIST page (pages/Orders.jsx). The two can't collide: a detail link
+  // always carries a Sales Order name as seg[1].
+  if (seg[0] === 'orders') {
+    if (seg[1]) return { page: 'confirmation', params: { name: seg[1] } };
+    return { page: 'orders', params: {} };
+  }
   return { page: 'shop', params: {} };
 }
 
