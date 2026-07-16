@@ -9,15 +9,15 @@
   display:inline-flex;align-items:center;gap:7px;
   height:30px;padding:0 11px;border-radius:999px;
   background:var(--accent-soft);color:var(--accent-2);
-  border:1px solid #c9d5e6;font-family:var(--f);font-size:11.5px;font-weight:500;
+  border:1px solid var(--border-2);font-family:var(--f);font-size:11.5px;font-weight:500;
   cursor:pointer;transition:background 0.12s, border-color 0.12s;
 }
-.imp-btn:hover{background:#d6e2d8;border-color:var(--accent);}
+.imp-btn:hover{background:var(--accent-soft);border-color:var(--accent);filter:brightness(0.97);}
 .imp-btn .material-symbols-outlined{color:var(--accent);}
 .imp-drop{
   position:absolute;top:calc(100% + 6px);right:0;
   width:340px;max-height:440px;background:var(--surface);
-  border:1px solid var(--border);border-radius:10px;
+  border:1px solid var(--border);border-radius:12px;
   box-shadow:var(--shadow-lg);z-index:120;
   display:flex;flex-direction:column;overflow:hidden;
 }
