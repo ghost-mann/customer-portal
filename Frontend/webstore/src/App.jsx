@@ -1,20 +1,19 @@
-import { useEffect, useState } from 'react';
-import { getSettings, getHome } from './lib/api';
+import { useEffect } from 'react';
+import { useStore } from './store';
+import { useRoute } from './router';
 
 export default function App() {
-  const [state, setState] = useState({ loading: true });
-  useEffect(() => {
-    Promise.all([getSettings(), getHome()])
-      .then(([settings, home]) => setState({ loading: false, settings, home }))
-      .catch((e) => setState({ loading: false, error: String(e) }));
-  }, []);
+  const { loading, error, home, bootstrap } = useStore();
+  const { page } = useRoute();
 
-  if (state.loading) return <div className="boot">Loading Upande Webstore…</div>;
-  if (state.error) return <div className="boot">Could not load the shop: {state.error}</div>;
+  useEffect(() => { bootstrap(); }, []);
+
+  if (loading) return <div className="boot">Loading Upande Webstore…</div>;
+  if (error) return <div className="boot">Could not load the shop: {error}</div>;
   return (
     <div className="boot">
-      <h1 style={{ fontFamily: 'var(--serif)' }}>Upande Webstore</h1>
-      <p>{state.home.new_arrivals.length} products · {state.home.categories.length} categories</p>
+      <h1>Upande Webstore</h1>
+      <p>Route: <strong>{page}</strong> · {home?.new_arrivals?.length ?? 0} products</p>
     </div>
   );
 }
