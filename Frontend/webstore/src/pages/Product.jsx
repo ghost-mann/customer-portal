@@ -100,14 +100,20 @@ export default function Product() {
   }
 
   const variantGated = Boolean(product.has_variants) && Boolean(settings && settings.enable_variants);
+  // show_stem_length only picks the picker's label/wording — the picker itself
+  // renders for any variant-gated item so add-to-cart never silently no-ops.
   const showStemLength = variantGated && Boolean(settings.show_stem_length);
   const showBoxType = Boolean(settings && settings.show_box_type);
   const stockQty = productInfo && productInfo.stock_qty;
   const maxQty = typeof stockQty === 'number' && stockQty > 0 ? Math.floor(stockQty) : undefined;
 
+  const stockGated = Boolean(settings && settings.show_stock_availability);
+  const outOfStock = stockGated && productInfo && productInfo.in_stock === false && !productInfo.on_backorder;
+
   const canAdd =
     !adding &&
-    (!variantGated || !showStemLength || Boolean(resolvedItemCode)) &&
+    (!variantGated || Boolean(resolvedItemCode)) &&
+    !outOfStock &&
     qty > 0;
 
   async function handleAddToCart() {
@@ -161,9 +167,9 @@ export default function Product() {
             />
           )}
 
-          {showStemLength && (
+          {variantGated && (
             <div className="ws-pd-section">
-              <span className="ws-rail-title">Stem length</span>
+              <span className="ws-rail-title">{showStemLength ? 'Stem length' : 'Options'}</span>
               <StemLengthSelector
                 templateItemCode={product.item_code}
                 onResolvedChange={setResolvedItemCode}
@@ -190,18 +196,26 @@ export default function Product() {
           )}
 
           <div className="ws-pd-section ws-pd-add-row">
-            <QtyStepper value={qty} onChange={setQty} max={maxQty} disabled={adding} />
+            <QtyStepper value={qty} onChange={setQty} max={maxQty} disabled={adding || outOfStock} />
             <button
               className="ws-btn-gold"
               disabled={!canAdd}
               onClick={handleAddToCart}
             >
-              {adding ? 'Adding…' : 'Add to Cart'}
+              {outOfStock ? 'Sold out' : adding ? 'Adding…' : 'Add to Cart'}
             </button>
           </div>
 
-          {variantGated && showStemLength && !resolvedItemCode && (
-            <div className="ws-pd-hint">Choose a stem length to add this item to your cart.</div>
+          {outOfStock && (
+            <div className="ws-pd-hint ws-pd-hint-bad">This item is currently out of stock.</div>
+          )}
+
+          {!outOfStock && variantGated && !resolvedItemCode && (
+            <div className="ws-pd-hint">
+              {showStemLength
+                ? 'Choose a stem length to add this item to your cart.'
+                : 'Choose an option to add this item to your cart.'}
+            </div>
           )}
 
           {addResult && (

@@ -13,6 +13,12 @@ export const brand = {
     goldSoft:  '#f3ebd7',
     line:      '#e7e3d9',
     muted:     '#6f6c64',
+    // Status colors (stock / add-to-cart feedback) — not part of the farm
+    // reskin's editorial palette, but tokenized so hex isn't duplicated in CSS.
+    good:      '#276a35',
+    goodSoft:  '#e9f3ea',
+    bad:       '#9c3b3b',
+    badSoft:   '#f6e6e6',
   },
   hero: {
     eyebrow: 'UPANDE FLOWERS',
@@ -24,6 +30,7 @@ export const brand = {
 const CSS_VARS = {
   ink: '--ink', paper: '--paper', surface: '--surface',
   gold: '--gold', goldSoft: '--gold-soft', line: '--line', muted: '--muted',
+  good: '--good', goodSoft: '--good-soft', bad: '--bad', badSoft: '--bad-soft',
 };
 
 export function applyBrand(b = brand) {
