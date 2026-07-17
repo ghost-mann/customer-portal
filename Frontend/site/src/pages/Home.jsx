@@ -18,6 +18,13 @@ const FALLBACK_GALLERY = [null, null, null, null, null, null];
 
 export default function Home({ content, navigate, isLoggedIn }) {
   const c = content || {};
+  // Section visibility. Toggles default ON so a missing `sections` map (older
+  // API payload) renders the full homepage unchanged. `enabled` is the master
+  // switch — when off, the whole custom homepage is hidden.
+  const sec = c.sections || {};
+  const on = (k) => sec[k] === undefined ? true : !!sec[k];
+  if (c.enabled === 0) return null;
+
   const hero = c.hero || {};
   const about = c.about || {};
   const propsItems = c.value_props?.length ? c.value_props : FALLBACK_PROPS;
@@ -32,6 +39,7 @@ export default function Home({ content, navigate, isLoggedIn }) {
 
   return (
     <>
+      {on('hero') && (
       <section className="hero">
         <div className="hero-inner">
           <div>
@@ -52,7 +60,9 @@ export default function Home({ content, navigate, isLoggedIn }) {
           <HeroImage src={hero.image} fallbackIcon="local_florist" meta="In season" />
         </div>
       </section>
+      )}
 
+      {on('value_props') && (
       <section className="section">
         <div className="container">
           <div className="section-head">
@@ -72,7 +82,9 @@ export default function Home({ content, navigate, isLoggedIn }) {
           </div>
         </div>
       </section>
+      )}
 
+      {on('about') && (
       <section className="section section-alt">
         <div className="container">
           <div className="split">
@@ -88,7 +100,7 @@ export default function Home({ content, navigate, isLoggedIn }) {
               <div style={{ marginTop: 22 }}>
                 <a className="btn-text" onClick={() => navigate('/about')}>Read more →</a>
               </div>
-              {stats.length > 0 && (
+              {on('stats') && stats.length > 0 && (
                 <div className="stats-row">
                   {stats.slice(0, 4).map((s, i) => (
                     <div key={i}>
@@ -102,7 +114,9 @@ export default function Home({ content, navigate, isLoggedIn }) {
           </div>
         </div>
       </section>
+      )}
 
+      {on('varieties') && (
       <section className="section">
         <div className="container">
           <div className="section-head">
@@ -133,7 +147,9 @@ export default function Home({ content, navigate, isLoggedIn }) {
           </div>
         </div>
       </section>
+      )}
 
+      {on('gallery') && (
       <section className="section section-alt">
         <div className="container">
           <div className="section-head">
@@ -151,7 +167,9 @@ export default function Home({ content, navigate, isLoggedIn }) {
           </div>
         </div>
       </section>
+      )}
 
+      {on('contact') && (
       <section className="section">
         <div className="container-narrow" style={{ textAlign: 'center' }}>
           <div className="section-eyebrow">READY TO TALK?</div>
@@ -166,6 +184,7 @@ export default function Home({ content, navigate, isLoggedIn }) {
           </a>
         </div>
       </section>
+      )}
     </>
   );
 }

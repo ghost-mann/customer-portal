@@ -33,6 +33,24 @@ def get_site_content() -> dict:
 		v = getattr(s, name, None) if s else None
 		return v if v not in (None, "") else default
 
+	def flag(name):
+		# Toggles default ON when the field / settings doc is missing.
+		v = getattr(s, name, None) if s else None
+		return 1 if v in (None, "") else int(v)
+
+	enabled = flag("enable_custom_homepage")
+	sections = {
+		"hero":        enabled and flag("show_hero"),
+		"value_props": enabled and flag("show_value_props"),
+		"about":       enabled and flag("show_about"),
+		"stats":       enabled and flag("show_stats"),
+		"varieties":   enabled and flag("show_varieties"),
+		"gallery":     enabled and flag("show_gallery"),
+		"contact":     enabled and flag("show_contact"),
+		"social":      enabled and flag("show_social"),
+	}
+	sections = {k: int(bool(v)) for k, v in sections.items()}
+
 	stats = _safe_parse_json(f("stats", ""), [])
 
 	value_props = []
@@ -61,6 +79,8 @@ def get_site_content() -> dict:
 		})
 
 	return {
+		"enabled": enabled,
+		"sections": sections,
 		"brand": {
 			"name": f("brand_name", "Customer Portal"),
 			"tagline": f("brand_tagline", "Farm-direct, every season"),
