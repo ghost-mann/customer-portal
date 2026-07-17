@@ -15,18 +15,19 @@ website_route_rules = [
 	{"from_route": "/upande-webstore/<path:app_path>", "to_route": "upande-webstore"},
 ]
 
-# The B2B /website-shop was retired and replaced by the public /upande-webstore.
-# RT7 user requirement: the ecommerce storefront is the site's main landing
-# page. `source: "/"` only matches the bare root (PathResolver strips leading/
-# trailing slashes before matching, so this compiles to the anchored pattern
-# `$`, which matches the empty string only — never a prefix of "/about" etc.),
-# so this 301s "/" to "/upande-webstore" without touching `website_route_rules`
-# or www/home.html: the marketing `site` area (home.html) keeps serving
-# /about, /varieties, /contact untouched, and remains reachable directly (and
-# restorable as the root) by removing/reordering this one rule.
+# Home ("/") lands on the framework desk (/app); the ecommerce storefront is
+# reachable via the friendly aliases /webstore and /customer-portal (and the
+# retired B2B /website-shop), which all 301 to the public /upande-webstore.
+# `source: "/"` only matches the bare root (PathResolver strips leading/trailing
+# slashes before matching, so it compiles to the anchored pattern `$`, matching
+# the empty string only — never a prefix of "/about" etc.), so this redirects
+# only the root without touching `website_route_rules` or www/home.html: the
+# marketing `site` area (home.html) keeps serving /about, /varieties, /contact.
 website_redirects = [
 	{"source": "/website-shop", "target": "/upande-webstore"},
-	{"source": "/", "target": "/upande-webstore"},
+	{"source": "/webstore", "target": "/upande-webstore"},
+	{"source": "/customer-portal", "target": "/upande-webstore"},
+	{"source": "/", "target": "/app"},
 ]
 
 # When a credit note (Sales Invoice with is_return=1) is submitted/cancelled,
