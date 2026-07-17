@@ -26,7 +26,7 @@ website_route_rules = [
 website_redirects = [
 	{"source": "/website-shop", "target": "/upande-webstore"},
 	{"source": "/webstore", "target": "/upande-webstore"},
-	{"source": "/customer-portal", "target": "/upande-webstore"},
+	{"source": "/customer-portal", "target": "/customer-portal"},
 	{"source": "/", "target": "/app"},
 ]
 
