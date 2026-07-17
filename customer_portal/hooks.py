@@ -16,8 +16,9 @@ website_route_rules = [
 ]
 
 # Home ("/") lands on the framework desk (/app); the ecommerce storefront is
-# reachable via the friendly aliases /webstore and /customer-portal (and the
-# retired B2B /website-shop), which all 301 to the public /upande-webstore.
+# reachable via the friendly alias /webstore (and the retired B2B /website-shop),
+# which 301 to the public /upande-webstore. /customer-portal is NOT redirected —
+# it serves its own www/customer-portal.html page (the customer-panel SPA).
 # `source: "/"` only matches the bare root (PathResolver strips leading/trailing
 # slashes before matching, so it compiles to the anchored pattern `$`, matching
 # the empty string only — never a prefix of "/about" etc.), so this redirects
@@ -26,7 +27,6 @@ website_route_rules = [
 website_redirects = [
 	{"source": "/website-shop", "target": "/upande-webstore"},
 	{"source": "/webstore", "target": "/upande-webstore"},
-	{"source": "/customer-portal", "target": "/customer-portal"},
 	{"source": "/", "target": "/app"},
 ]
 
